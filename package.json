@@ -1,0 +1,47 @@
+{
+  "name": "bluesky-growth-engine",
+  "version": "1.0.0",
+  "description": "Bluesky growth engine for neoreactionary.bsky.social",
+  "main": "index.js",
+  "scripts": {
+    "start": "node dist/index.js",
+    "build": "tsc -p .",
+    "dev": "tsx watch src/index.ts",
+    "collect:all": "tsx src/collect-all.ts",
+    "collect:interactions": "tsx src/interactions-collector.ts",
+    "collect:bulk-interactions": "tsx src/bulk-interactions-collector.ts",
+    "firehose": "tsx src/firehose-collector.ts",
+    "backfill:graph": "tsx src/backfill-social-graph.ts",
+    "collect:follows": "tsx src/collect-follows-only.ts",
+    "collect:follows-dynamic": "tsx src/collect-follows-dynamic.ts",
+    "collect:follows-simple": "tsx src/collect-follows-simple.ts",
+    "check:progress": "tsx src/check-progress.ts",
+    "export:network": "tsx src/export-network.ts",
+    "analytics": "tsx src/analytics.ts",
+    "lint": "eslint .",
+    "typecheck": "tsc -p . --noEmit",
+    "test:supabase": "tsx test-supabase.ts",
+    "frontend": "cd frontend && npm run dev",
+    "frontend:build": "cd frontend && npm run build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.46.1",
+    "@typescript-eslint/parser": "^8.46.1",
+    "eslint": "^9.37.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@atproto/api": "^0.17.3",
+    "@atproto/sync": "^0.1.35",
+    "@atproto/xrpc": "^0.7.5",
+    "@supabase/supabase-js": "^2.75.0",
+    "dotenv": "^17.2.3",
+    "ws": "^8.18.3"
+  }
+}
