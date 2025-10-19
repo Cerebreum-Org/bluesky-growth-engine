@@ -88,15 +88,19 @@ export function ProgressTracker() {
   return (
     <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-sm dark:border dark:border-zinc-800 p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold text-slate-900 dark:text-zinc-100">Collection Progress</h2>
+        <h2 className="text-lg font-bold text-slate-900 dark:text-zinc-100">Network Indexing Progress</h2>
         <div className={`w-2 h-2 rounded-full ${progress.isActive ? 'bg-green-500 dark:bg-green-400 animate-pulse' : 'bg-slate-400 dark:bg-gray-600'}`}></div>
       </div>
 
       <div className="space-y-4">
+        {/* Progress Description */}
+        <p className="text-xs text-slate-600 dark:text-slate-400">
+          Tracking progress of indexing the entire Bluesky network. {progress.usersWithPosts.toLocaleString()} of {progress.totalUsers.toLocaleString()} users scraped.
+        </p>
         {/* Progress Bar */}
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-slate-600 dark:text-slate-400">Data Collection</span>
+            <span className="text-slate-600 dark:text-slate-400">Total Network Coverage</span>
             <span className="font-medium text-slate-900 dark:text-slate-100">{progress.completion.toFixed(2)}%</span>
           </div>
           <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
@@ -108,10 +112,14 @@ export function ProgressTracker() {
         </div>
 
         {/* Key Metrics */}
-        <div className="grid grid-cols-2 gap-4 text-sm">
+        <div className="grid grid-cols-3 gap-4 text-sm">
           <div>
             <div className="text-slate-600 dark:text-slate-400">Total Users</div>
             <div className="font-bold text-slate-900 dark:text-slate-100">{progress.totalUsers.toLocaleString()}</div>
+          </div>
+          <div>
+            <div className="text-slate-600 dark:text-slate-400">Users Indexed</div>
+            <div className="font-bold text-slate-900 dark:text-slate-100">{progress.usersWithPosts.toLocaleString()}</div>
           </div>
           <div>
             <div className="text-slate-600 dark:text-slate-400">Relationships</div>
@@ -140,7 +148,7 @@ export function ProgressTracker() {
               <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
-              Collection Complete
+              Network Fully Indexed
             </div>
           </div>
         )}
