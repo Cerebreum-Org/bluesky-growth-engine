@@ -40,6 +40,8 @@
     "@atproto/api": "^0.17.3",
     "@atproto/sync": "^0.1.35",
     "@atproto/xrpc": "^0.7.5",
+    "@sentry/node": "^10.20.0",
+    "@sentry/profiling-node": "^10.20.0",
     "@supabase/supabase-js": "^2.75.0",
     "dotenv": "^17.2.3",
     "ws": "^8.18.3"

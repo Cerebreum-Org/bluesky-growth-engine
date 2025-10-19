@@ -1,6 +1,10 @@
 import 'dotenv/config';
+import { initSentry, Sentry } from './sentry.js';
 import { BskyAgent } from '@atproto/api';
 import { collectUsersEnhanced } from './strategies.js';
+
+// Initialize Sentry before anything else
+initSentry();
 
 async function main() {
   const handle = process.env.BLUESKY_HANDLE;
@@ -47,5 +51,9 @@ async function main() {
 
 main().catch((err) => {
   console.error(err);
-  process.exit(1);
+  Sentry.captureException(err);
+  // Flush Sentry events before exit
+  Sentry.close(2000).then(() => {
+    process.exit(1);
+  });
 });
