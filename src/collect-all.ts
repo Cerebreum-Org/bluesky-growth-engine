@@ -35,7 +35,8 @@ async function main() {
 
   const maxUsers = Number(process.env.MAX_USERS || Number.POSITIVE_INFINITY);
   const maxDegrees = Number(process.env.MAX_DEGREES || 6);
-  const rateLimitDelay = Number(process.env.RATE_LIMIT_DELAY_MS || 50);
+  // Bluesky API limit: 3000 req/5min = 10 req/sec max. 150ms = 6.67 req/sec (safe margin)
+  const rateLimitDelay = Number(process.env.RATE_LIMIT_DELAY_MS || 150);
 
   console.log(`Configuration:`);
   console.log(`- Max Users: ${maxUsers === Number.POSITIVE_INFINITY ? 'UNLIMITED' : maxUsers.toLocaleString()}`);

@@ -3,22 +3,24 @@ import { BskyAgent } from '@atproto/api';
 import { supabase } from './supabase.js';
 
 /**
- * Social Graph Backfill
+ * UNLIMITED Social Graph Collection
  * 
- * Collects complete social graph data for existing users:
- * - Posts (with engagement metrics)
- * - Likes
- * - Reposts
- * - Follows/Followers (already have, but will update)
- * - Quote posts
+ * Collects the ENTIRE Bluesky network with NO LIMITS:
+ * - Discovers and adds ALL new users encountered
+ * - Collects ALL posts (unlimited per user)
+ * - Collects ALL likes and reposts
+ * - Collects ALL follows/followers (unlimited)
+ * - Continuously expands network by crawling discovered users
+ * 
+ * WARNING: This will grow your database indefinitely!
  */
 
-const BATCH_SIZE = 50; // Reduced to avoid statement timeout
-const RATE_LIMIT_DELAY = 50; // ms between requests (reduced for speed)
-const MAX_POSTS_PER_USER = 100; // Limit posts to avoid huge queries
+const BATCH_SIZE = Number(process.env.BATCH_SIZE ?? '50'); // default 50
+const RATE_LIMIT_DELAY = Number(process.env.RATE_LIMIT_DELAY ?? '2000'); // ms between requests
+const MAX_POSTS_PER_USER = Infinity; // NO LIMIT - collect ALL posts
 const SKIP_FOLLOWS = false; // Collect follows
-const COLLECT_LIKES_REPOSTS = true; // Collect who liked/reposted each post (slower but more complete)
-const CONCURRENCY = 10; // Process 10 users at once
+const COLLECT_LIKES_REPOSTS = true; // Collect ALL likes/reposts
+const CONCURRENCY = Number(process.env.CONCURRENCY ?? '1'); // concurrent users
 const MAX_RETRIES = 3; // Retry failed DB operations
 
 let agent: BskyAgent;
@@ -241,55 +243,72 @@ async function flushFollowBatch() {
 
 async function collectUserPosts(did: string) {
   try {
-    const response = await agent.getAuthorFeed({
-      actor: did,
-      limit: MAX_POSTS_PER_USER,
-    });
-
-    for (const item of response.data.feed) {
-      const post = item.post;
-      
-      // Only save posts from users in our database
-      if (!userDids.has(post.author.did)) {
-        continue;
-      }
-      
-      postBatch.push({
-        uri: post.uri,
-        cid: post.cid,
-        author_did: post.author.did,
-        text: (post.record as any).text || null,
-        created_at: post.indexedAt,
-        reply_parent: (post.record as any).reply?.parent?.uri || null,
-        reply_root: (post.record as any).reply?.root?.uri || null,
-        embed_type: post.embed?.$type || null,
-        embed_uri: (post.embed as any)?.uri || null,
-        like_count: post.likeCount || 0,
-        repost_count: post.repostCount || 0,
-        reply_count: post.replyCount || 0,
-        quote_count: post.quoteCount || 0,
-        indexed_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+    let cursor: string | undefined;
+    
+    // Paginate through ALL posts
+    do {
+      const response = await agent.getAuthorFeed({
+        actor: did,
+        limit: 100,
+        cursor,
       });
 
-      if (postBatch.length >= BATCH_SIZE) {
-        await flushPostBatch();
+      for (const item of response.data.feed) {
+        const post = item.post;
+        
+        // ADD post author to database if new
+        if (!userDids.has(post.author.did)) {
+          const newUser = {
+            did: post.author.did,
+            handle: post.author.handle,
+            display_name: post.author.displayName,
+            avatar: post.author.avatar,
+            indexed_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          };
+          await supabase.from('bluesky_users').upsert(newUser, { onConflict: 'did' });
+          userDids.add(post.author.did);
+        }
+        
+        postBatch.push({
+          uri: post.uri,
+          cid: post.cid,
+          author_did: post.author.did,
+          text: (post.record as any).text || null,
+          created_at: post.indexedAt,
+          reply_parent: (post.record as any).reply?.parent?.uri || null,
+          reply_root: (post.record as any).reply?.root?.uri || null,
+          embed_type: post.embed?.$type || null,
+          embed_uri: (post.embed as any)?.uri || null,
+          like_count: post.likeCount || 0,
+          repost_count: post.repostCount || 0,
+          reply_count: post.replyCount || 0,
+          quote_count: (post as any).quoteCount || 0,
+        });
+
+        if (postBatch.length >= BATCH_SIZE) {
+          await flushPostBatch();
+        }
+        
+        existingPostUris.add(post.uri);
+
+        // Collect likes and reposts for this post
+        if (COLLECT_LIKES_REPOSTS) {
+          await collectPostLikes(post.uri);
+          await collectPostReposts(post.uri);
+        }
       }
       
-      // Collect likes and reposts for this post (only if enabled and has engagement)
-      if (COLLECT_LIKES_REPOSTS) {
-        if (post.likeCount && post.likeCount > 0) {
-          await collectPostLikes(post.uri);
-          await new Promise(resolve => setTimeout(resolve, RATE_LIMIT_DELAY));
-        }
-        if (post.repostCount && post.repostCount > 0) {
-          await collectPostReposts(post.uri, post.cid);
-          await new Promise(resolve => setTimeout(resolve, RATE_LIMIT_DELAY));
-        }
+      cursor = response.data.cursor;
+      
+      // Small delay between pages
+      if (cursor) {
+        await new Promise(resolve => setTimeout(resolve, RATE_LIMIT_DELAY));
       }
-    }
-  } catch {
-    // User might have private profile or no posts
+    } while (cursor); // Continue until no more pages
+    
+  } catch (e: any) {
+    if (processedUsers < 10) console.warn(`Error processing user:`, e.message);
   }
 }
 
@@ -301,11 +320,19 @@ async function collectPostLikes(postUri: string) {
     });
 
     for (const like of response.data.likes) {
-      // Only save likes from users in our database
+      // ADD like author to database if new
       if (!userDids.has(like.actor.did)) {
-        continue;
+        const newUser = {
+          did: like.actor.did,
+          handle: like.actor.handle,
+          display_name: like.actor.displayName,
+          avatar: like.actor.avatar,
+          indexed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        await supabase.from('bluesky_users').upsert(newUser, { onConflict: 'did' });
+        userDids.add(like.actor.did);
       }
-      
       // Dedupe key
       const likeKey = `${like.actor.did}:${postUri}`;
       if (seenLikeKeys.has(likeKey)) {
@@ -342,11 +369,19 @@ async function collectPostReposts(postUri: string, postCid: string) {
     });
 
     for (const reposter of response.data.repostedBy) {
-      // Only save reposts from users in our database
+      // ADD reposter to database if new
       if (!userDids.has(reposter.did)) {
-        continue;
+        const newUser = {
+          did: reposter.did,
+          handle: reposter.handle,
+          display_name: reposter.displayName,
+          avatar: reposter.avatar,
+          indexed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        await supabase.from('bluesky_users').upsert(newUser, { onConflict: 'did' });
+        userDids.add(reposter.did);
       }
-      
       // Dedupe key
       const repostKey = `${reposter.did}:${postUri}`;
       if (seenRepostKeys.has(repostKey)) {
@@ -380,7 +415,7 @@ async function collectUserFollows(did: string) {
     // Get following
     let cursor: string | undefined;
     let count = 0;
-    const maxFollows = 1000; // Limit to avoid huge queries
+    const maxFollows = Infinity; // Limit to avoid huge queries
 
     do {
       const response = await agent.getFollows({
@@ -390,15 +425,26 @@ async function collectUserFollows(did: string) {
       });
 
       for (const follow of response.data.follows) {
-        // Only add if the following user is in our database
-        if (userDids.has(follow.did)) {
-          followBatch.push({
-            follower_did: did,
-            following_did: follow.did,
-            created_at: new Date().toISOString(),
+        // ADD all discovered users to database
+        if (!userDids.has(follow.did)) {
+          const newUser = {
+            did: follow.did,
+            handle: follow.handle,
+            display_name: follow.displayName,
+            avatar: follow.avatar,
+            indexed_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
-          });
+          };
+          await supabase.from('bluesky_users').upsert(newUser, { onConflict: 'did' });
+          userDids.add(follow.did);
         }
+        
+        followBatch.push({
+          follower_did: did,
+          following_did: follow.did,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
 
         count++;
         if (count >= maxFollows) break;
@@ -424,15 +470,26 @@ async function collectUserFollows(did: string) {
       });
 
       for (const follower of response.data.followers) {
-        // Only add if the follower user is in our database
-        if (userDids.has(follower.did)) {
-          followBatch.push({
-            follower_did: follower.did,
-            following_did: did,
-            created_at: new Date().toISOString(),
+        // ADD all discovered users to database
+        if (!userDids.has(follower.did)) {
+          const newUser = {
+            did: follower.did,
+            handle: follower.handle,
+            display_name: follower.displayName,
+            avatar: follower.avatar,
+            indexed_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
-          });
+          };
+          await supabase.from('bluesky_users').upsert(newUser, { onConflict: 'did' });
+          userDids.add(follower.did);
         }
+        
+        followBatch.push({
+          follower_did: follower.did,
+          following_did: did,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
 
         count++;
         if (count >= maxFollows) break;
@@ -470,7 +527,8 @@ async function processUser(did: string, handle: string) {
     if (processedUsers % 100 === 0) {
       console.log(`Progress: ${processedUsers}/${totalUsers} users | Posts: ${totalPosts} | Likes: ${totalLikes} | Reposts: ${totalReposts} | Follows: ${totalFollows}`);
     }
-  } catch (e) {
+  } catch (e: any) {
+    if (processedUsers < 10) console.warn(`Error processing user:`, e.message);
     console.warn(`Failed to process user ${handle}:`, e);
   }
 }

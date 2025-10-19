@@ -1,6 +1,39 @@
 import type { BskyAgent } from '@atproto/api';
 import { supabase, type BlueskyUser, type BlueskyFollow } from './supabase.js';
 
+
+// Retry helper for rate limit handling
+function delay(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxRetries = 5,
+  baseDelay = 5000
+): Promise<T> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      const isRateLimit = error?.error === "RateLimitExceeded" || error?.status === 429;
+      
+      if (!isRateLimit || attempt === maxRetries) {
+        throw error;
+      }
+      
+      // Parse reset time from headers if available
+      const resetTime = error?.headers?.["ratelimit-reset"];
+      const waitTime = resetTime 
+        ? Math.max(0, (parseInt(resetTime) * 1000) - Date.now()) + 1000 // +1s buffer
+        : baseDelay * Math.pow(2, attempt); // Exponential backoff
+      
+      console.log(`⏳ Rate limited. Waiting ${Math.round(waitTime/1000)}s before retry (attempt ${attempt + 1}/${maxRetries})...`);
+      await delay(waitTime);
+    }
+  }
+  throw new Error("Max retries exceeded");
+}
 export async function followBack(agent: BskyAgent, limit = 20) {
   const session = agent.session;
   if (!session) throw new Error('Not authenticated');
@@ -226,7 +259,7 @@ export async function collectUsersEnhanced(agent: BskyAgent, options: {
     includeFollowing = true,
     minFollowers = 0,
     maxFollowers = Infinity,
-    rateLimitDelay = 50, // ms between requests (reduced for faster collection)
+    rateLimitDelay = 150, // ms between requests (reduced for faster collection)
   } = options;
 
   const processedDids = new Set<string>();
@@ -387,11 +420,11 @@ export async function collectUsersEnhanced(agent: BskyAgent, options: {
         do {
           if (pageCount >= maxPages) break;
           
-          const followersRes = await agent.getFollowers({
+          const followersRes = await retryWithBackoff(() => agent.getFollowers({
             actor: did,
             limit: 100,
             cursor,
-          });
+          }));
 
           for (const follower of followersRes.data.followers) {
             if (totalCollected >= maxUsers) break;
@@ -417,11 +450,11 @@ export async function collectUsersEnhanced(agent: BskyAgent, options: {
         do {
           if (pageCount >= maxPages) break;
           
-          const followingRes = await agent.getFollows({
+          const followingRes = await retryWithBackoff(() => agent.getFollows({
             actor: did,
             limit: 100,
             cursor,
-          });
+          }));
 
           for (const following of followingRes.data.follows) {
             if (totalCollected >= maxUsers) break;
@@ -450,7 +483,7 @@ export async function collectUsersEnhanced(agent: BskyAgent, options: {
   
   for (const handle of initialHandles) {
     try {
-      const profile = await agent.getProfile({ actor: handle });
+      const profile = await retryWithBackoff(() => agent.getProfile({ actor: handle }));
       await saveUser(profile.data, 0);
       if (rateLimitDelay > 0) await delay(rateLimitDelay);
     } catch (e) {

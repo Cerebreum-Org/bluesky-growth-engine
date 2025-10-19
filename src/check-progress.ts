@@ -15,27 +15,27 @@ async function checkProgress() {
   // Get total users
   const { count: totalUsers } = await supabase
     .from('bluesky_users')
-    .select('*', { count: 'exact', head: true });
+    .select('*', { count: 'exact' }).limit(1);
 
   // Get posts count
   const { count: totalPosts } = await supabase
     .from('bluesky_posts')
-    .select('*', { count: 'exact', head: true });
+    .select('*', { count: 'exact' }).limit(1);
 
   // Get follows count
   const { count: totalFollows } = await supabase
     .from('bluesky_follows')
-    .select('*', { count: 'exact', head: true });
+    .select('*', { count: 'exact' }).limit(1);
 
   // Get likes count
   const { count: totalLikes } = await supabase
     .from('bluesky_likes')
-    .select('*', { count: 'exact', head: true });
+    .select('*', { count: 'exact' }).limit(1);
 
   // Get reposts count
   const { count: totalReposts } = await supabase
     .from('bluesky_reposts')
-    .select('*', { count: 'exact', head: true });
+    .select('*', { count: 'exact' }).limit(1);
 
   // Get unique authors with posts (users processed)
   const { data: authorsData } = await supabase

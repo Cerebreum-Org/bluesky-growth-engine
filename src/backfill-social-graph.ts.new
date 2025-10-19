@@ -1,0 +1,18 @@
+import 'dotenv/config';
+import { BskyAgent } from '@atproto/api';
+import { supabase } from './supabase.js';
+
+/**
+ * UNLIMITED Social Graph Collection
+ * Collects EVERYTHING from Bluesky without limits
+ */
+
+const BATCH_SIZE = 50;
+const RATE_LIMIT_DELAY = 200; // ms between requests  
+const MAX_POSTS_PER_USER = Infinity; // NO LIMIT - collect ALL posts
+const SKIP_FOLLOWS = false;
+const COLLECT_LIKES_REPOSTS = true; // Collect ALL engagement
+const CONCURRENCY = 5;
+const MAX_RETRIES = 3;
+const ADD_NEW_USERS = true; // Add discovered users to database
+
