@@ -1,4 +1,4 @@
-import { IngestionHealth } from '//components/IngestionHealth';
+import { IngestionHealth } from '@/components/IngestionHealth';
 import { StatsCards } from '@/components/StatsCards';
 import { UserList } from '@/components/UserList';
 import { NetworkStats } from '@/components/NetworkStats';
