@@ -519,6 +519,28 @@ async function startCollector() {
     };
 
     postQueue.set(event.commit.rkey, postData);
+
+    // Quote detection
+    try {
+      const qt = getQuoteTarget((event.commit as any).record);
+      if (qt && qt.uri) {
+        (postData as any).is_quote_post = true;
+        (postData as any).quote_target_uri = qt.uri;
+        const parsed = parseAtUri(qt.uri);
+        (postData as any).quote_target_author = parsed.did;
+        (postData as any).quote_chain_root = qt.uri;
+        quotePostQueue.set(event.commit.rkey, {
+          root_post_uri: qt.uri,
+          root_post_author: parsed.did || 'unknown',
+          chain_length: 1,
+          total_engagement: 0,
+          participants: [event.did],
+          indexed_at: new Date().toISOString()
+        });
+      }
+    } catch (e) {
+      console.error('quote detection error', e);
+    }
     
     // ENHANCED PROCESSING
     processPostContent(event);
