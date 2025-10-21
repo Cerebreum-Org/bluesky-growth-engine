@@ -113,3 +113,13 @@ Review docs/elite-engineering-spec.md and approve implementation phases.
 
 ### Decision Point
 Begin with Result types implementation - highest ROI for time invested.
+
+## Task Tracker (8-step plan)
+- [x] Analyze current Jetstream collectors
+- [x] Analyze current backfill scripts
+- [x] Design comprehensive data collection strategy
+- [x] Enhance Jetstream collector for comprehensive capture — completed (handlers+storage for generator/threadgate/starterpack/labeler, enrichment tables, quote chains)
+- [ ] Enhance backfill scripts for comprehensive historical data
+- [ ] Integrate reliability patterns into collectors
+- [ ] Test enhanced collection systems
+- [ ] Document collection capabilities
