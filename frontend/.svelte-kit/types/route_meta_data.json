@@ -1,0 +1,33 @@
+{
+	"/": [],
+	"/analytics": [],
+	"/api/analytics": [
+		"src/routes/api/analytics/+server.ts"
+	],
+	"/api/communities": [
+		"src/routes/api/communities/+server.ts"
+	],
+	"/api/graph": [
+		"src/routes/api/graph/+server.ts"
+	],
+	"/api/growth-insights": [
+		"src/routes/api/growth-insights/+server.ts"
+	],
+	"/api/predictions": [
+		"src/routes/api/predictions/+server.ts"
+	],
+	"/api/search": [
+		"src/routes/api/search/+server.ts"
+	],
+	"/api/stats": [
+		"src/routes/api/stats/+server.ts"
+	],
+	"/demo": [],
+	"/demo/lucia": [
+		"src/routes/demo/lucia/+page.server.ts"
+	],
+	"/demo/lucia/login": [
+		"src/routes/demo/lucia/login/+page.server.ts"
+	],
+	"/demo/paraglide": []
+}

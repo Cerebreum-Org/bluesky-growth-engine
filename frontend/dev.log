@@ -1,0 +1,245 @@
+nohup: ignoring input
+
+> frontend@0.0.1 dev
+> vite dev
+
+✔ [paraglide-js] Compilation complete (locale-modules)
+Port 5173 is in use, trying another one...
+
+  VITE v7.1.10  ready in 3577 ms
+
+  ➜  Local:   http://localhost:5174/
+  ➜  Network: http://10.255.255.254:5174/
+  ➜  Network: http://172.27.171.67:5174/
+  ➜  Network: http://100.69.129.86:5174/
+9:36:47 PM [vite-plugin-svelte] src/lib/components/NetworkGraph.svelte:5:6 `container` is updated, but is not declared with `$state(...)`. Changing its value will not correctly trigger updates
+https://svelte.dev/e/non_reactive_update
+9:36:50 PM [vite-plugin-svelte] src/lib/components/NetworkGraph.svelte:5:6 `container` is updated, but is not declared with `$state(...)`. Changing its value will not correctly trigger updates
+https://svelte.dev/e/non_reactive_update
+Error fetching graph data: DrizzleQueryError: Failed query: select "follower_did", "following_did" from "bluesky_follows" where "bluesky_follows"."follower_did" = ANY(($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, $39, $40, $41, $42, $43, $44, $45, $46, $47, $48, $49, $50, $51, $52, $53, $54, $55, $56, $57, $58, $59, $60, $61, $62, $63, $64, $65, $66, $67, $68, $69, $70, $71, $72, $73, $74, $75, $76, $77, $78, $79, $80, $81, $82, $83, $84, $85, $86, $87, $88, $89)) 
+            AND "bluesky_follows"."following_did" = ANY(($90, $91, $92, $93, $94, $95, $96, $97, $98, $99, $100, $101, $102, $103, $104, $105, $106, $107, $108, $109, $110, $111, $112, $113, $114, $115, $116, $117, $118, $119, $120, $121, $122, $123, $124, $125, $126, $127, $128, $129, $130, $131, $132, $133, $134, $135, $136, $137, $138, $139, $140, $141, $142, $143, $144, $145, $146, $147, $148, $149, $150, $151, $152, $153, $154, $155, $156, $157, $158, $159, $160, $161, $162, $163, $164, $165, $166, $167, $168, $169, $170, $171, $172, $173, $174, $175, $176, $177, $178)) limit $179
+params: did:plc:z72i7hdynmk6r22z27h6tvur,did:plc:p7gxyfr5vii5ntpwo7f6dhe2,did:plc:oky5czdrnfjpqslsw2a5iclo,did:plc:6wpkkitfdkgthatfvspcfmjo,did:plc:ragtjsm2j2vknwkz3zp4oxrd,did:plc:air6uqdlhdothgnnrgdkldkt,did:plc:44ybard66vv44zksje25o7dz,did:plc:ube5kivqggi5ilu2wsayjj5g,did:plc:2wdi2b35iafydlblfj75du4m,did:plc:wgkha2dpa2pjv5pvq2zcb4w4,did:plc:4xs4yrafcqjx4tur5l6z3tbh,did:plc:spgwnvzb3xdy6rjtlzodcf3s,did:plc:ug5rp5pwlq3gdwychjhip2hh,did:plc:qmswljlp5jwxiupngxcgeg5x,did:plc:gz7kpwzjweoe5ezsaubaasfl,did:plc:trbkqefqmftwqdk3ehhlbvun,did:plc:luclt5if4hecw4vus6mxo5rg,did:plc:sk56vp6kcaaiajfuielpxugq,did:plc:b2fk6qhywlv4nfr36uuvv46w,did:plc:46jldlpfb6f4h3qtlblr6nrr,did:plc:whycfvrwoppxfq42adfryyj5,did:plc:umv3bg2iiak3zvnbesxpptwl,did:plc:3nq3ha5olzburl4f4jok3toq,did:plc:4hzlishmiath4k5dbodospz5,did:plc:tm4shfn4dox2h242ihgs2ash,did:plc:z3kom5wghjkyggfviteysvaz,did:plc:bfyq66wvpdngirzdwjjgvleu,did:plc:ozqibsfmtvnrxoomhw4yblyp,did:plc:m5cgb3yu6owrp7nzvxyoipu3,did:plc:ge2jqquo27pmkvzfdkhdxktm,did:plc:7t5y2gwrixoue3a2swtj66mk,did:plc:6d5fwppfow3ltmfnglyid4jx,did:plc:7xcf6j7xbb6navs6fpwvunkl,did:plc:oca55mq4uowyichmcerhah3r,did:plc:7o4l5ogudpczhorsoojshosn,did:plc:shsth6ackrxqsbeuoyven3dm,did:plc:vsalt3y7el4zrse53lg5etbm,did:plc:u65r7csocpcveoro5vromctu,did:plc:bzf5izikvtpx5ajawy3ke5da,did:plc:byk62b4f2sxi4qjjtiuheouz,did:plc:vvic2zox5krgcflqtid2b3iz,did:plc:rywcbslvkswlntyc2qnajyaa,did:plc:qwkh2h6ed6h6lj46zuedjsav,did:plc:eqa26vdj7sg5zvcquqynprnj,did:plc:hy2rugzcs3gwpbcgafdadisp,did:plc:hapcm4v3tfyaxbeo5h5u4wwo,did:plc:xmxqk2mobodtcpxf22ktlkrk,did:plc:oph7lxbiepoytj5ruymhf6yo,did:plc:hoqhmgqljhkfyl7hmxz7c42f,did:plc:rjdggjrrdw7daljz5h462tpm,did:plc:agaar6qhbb6exns5ukczmt7y,did:plc:ofzt5urtzk3jn5dh43aubbb6,did:plc:pnhfxp25xzep65xaodn5x5ni,did:plc:6eddiachmmxaue7njwltykyz,did:plc:juvlgl2iirxoqtrvz5nzdbt6,did:plc:fncom2qtykl6cjg44u4ytuf4,did:plc:ilebudjlpfj3pgdfqwytn5t2,did:plc:qpcsldehho7vpwrpm4vyxi4x,did:plc:qmj4wwav5m42ufq6s4g4sbo3,did:plc:ozzhs6i6od3xsbuwubsp7bh7,did:plc:chtwovi7qhl7zko6umcibgk7,did:plc:cuf56f4zqxk4s3kg2zlanfdo,did:plc:7jppa3ru7tlg74zxjjtgtc3x,did:plc:x3e23gvonnsozpvg65nml2gr,did:plc:pfywyblhox4shuinyvc7ygjz,did:plc:sr62y4u7e6mm2mliibdb3z6f,did:plc:v7ex7mdq3ktptdfw7nesv6t4,did:plc:yyl2m5pyb4r36lg5d3gzkpzw,did:plc:dv7j7w6fx6l6n4il63n2pg2p,did:plc:icyzqltifk6ah7z6l5loztcf,did:plc:4er6jgzl7moxgebsknwe5ojw,did:plc:7pexj6snypvxgpqpakz6moje,did:plc:t55gglt2p7xl26h52hyar2q4,did:plc:k6t4szawepfrgglofzg36t25,did:plc:5fddxrjycrxr4zo24vczvtyy,did:plc:vbusrpqkbs3oiw45z4uehvp4,did:plc:63anvr7ubxw7dkom5es2haag,did:plc:keosgxmesei2n5ht772375vo,did:plc:miz5ysbp4wbx7cdtwnr6ysky,did:plc:vel6lm4zf2ui76adrgpgwhhs,did:plc:rfwzrdmsfekztw7fuzcabug7,did:plc:feaaqebjifbh6pxtf5sk7yda,did:plc:ii6iagbezccwoatqptwlchde,did:plc:77itbicidzonjlu72khaqeh7,did:plc:f7awl4c6w6ypw4dkrvw7b4yi,did:plc:ubahyfz5eeive7oeqjmzctji,did:plc:xl3pf6cwb62uviv4hco7r3jo,did:plc:26tthof4behv4kmwfrrjvchw,did:plc:4shue7ylzx64wu4k67agpkoa,did:plc:z72i7hdynmk6r22z27h6tvur,did:plc:p7gxyfr5vii5ntpwo7f6dhe2,did:plc:oky5czdrnfjpqslsw2a5iclo,did:plc:6wpkkitfdkgthatfvspcfmjo,did:plc:ragtjsm2j2vknwkz3zp4oxrd,did:plc:air6uqdlhdothgnnrgdkldkt,did:plc:44ybard66vv44zksje25o7dz,did:plc:ube5kivqggi5ilu2wsayjj5g,did:plc:2wdi2b35iafydlblfj75du4m,did:plc:wgkha2dpa2pjv5pvq2zcb4w4,did:plc:4xs4yrafcqjx4tur5l6z3tbh,did:plc:spgwnvzb3xdy6rjtlzodcf3s,did:plc:ug5rp5pwlq3gdwychjhip2hh,did:plc:qmswljlp5jwxiupngxcgeg5x,did:plc:gz7kpwzjweoe5ezsaubaasfl,did:plc:trbkqefqmftwqdk3ehhlbvun,did:plc:luclt5if4hecw4vus6mxo5rg,did:plc:sk56vp6kcaaiajfuielpxugq,did:plc:b2fk6qhywlv4nfr36uuvv46w,did:plc:46jldlpfb6f4h3qtlblr6nrr,did:plc:whycfvrwoppxfq42adfryyj5,did:plc:umv3bg2iiak3zvnbesxpptwl,did:plc:3nq3ha5olzburl4f4jok3toq,did:plc:4hzlishmiath4k5dbodospz5,did:plc:tm4shfn4dox2h242ihgs2ash,did:plc:z3kom5wghjkyggfviteysvaz,did:plc:bfyq66wvpdngirzdwjjgvleu,did:plc:ozqibsfmtvnrxoomhw4yblyp,did:plc:m5cgb3yu6owrp7nzvxyoipu3,did:plc:ge2jqquo27pmkvzfdkhdxktm,did:plc:7t5y2gwrixoue3a2swtj66mk,did:plc:6d5fwppfow3ltmfnglyid4jx,did:plc:7xcf6j7xbb6navs6fpwvunkl,did:plc:oca55mq4uowyichmcerhah3r,did:plc:7o4l5ogudpczhorsoojshosn,did:plc:shsth6ackrxqsbeuoyven3dm,did:plc:vsalt3y7el4zrse53lg5etbm,did:plc:u65r7csocpcveoro5vromctu,did:plc:bzf5izikvtpx5ajawy3ke5da,did:plc:byk62b4f2sxi4qjjtiuheouz,did:plc:vvic2zox5krgcflqtid2b3iz,did:plc:rywcbslvkswlntyc2qnajyaa,did:plc:qwkh2h6ed6h6lj46zuedjsav,did:plc:eqa26vdj7sg5zvcquqynprnj,did:plc:hy2rugzcs3gwpbcgafdadisp,did:plc:hapcm4v3tfyaxbeo5h5u4wwo,did:plc:xmxqk2mobodtcpxf22ktlkrk,did:plc:oph7lxbiepoytj5ruymhf6yo,did:plc:hoqhmgqljhkfyl7hmxz7c42f,did:plc:rjdggjrrdw7daljz5h462tpm,did:plc:agaar6qhbb6exns5ukczmt7y,did:plc:ofzt5urtzk3jn5dh43aubbb6,did:plc:pnhfxp25xzep65xaodn5x5ni,did:plc:6eddiachmmxaue7njwltykyz,did:plc:juvlgl2iirxoqtrvz5nzdbt6,did:plc:fncom2qtykl6cjg44u4ytuf4,did:plc:ilebudjlpfj3pgdfqwytn5t2,did:plc:qpcsldehho7vpwrpm4vyxi4x,did:plc:qmj4wwav5m42ufq6s4g4sbo3,did:plc:ozzhs6i6od3xsbuwubsp7bh7,did:plc:chtwovi7qhl7zko6umcibgk7,did:plc:cuf56f4zqxk4s3kg2zlanfdo,did:plc:7jppa3ru7tlg74zxjjtgtc3x,did:plc:x3e23gvonnsozpvg65nml2gr,did:plc:pfywyblhox4shuinyvc7ygjz,did:plc:sr62y4u7e6mm2mliibdb3z6f,did:plc:v7ex7mdq3ktptdfw7nesv6t4,did:plc:yyl2m5pyb4r36lg5d3gzkpzw,did:plc:dv7j7w6fx6l6n4il63n2pg2p,did:plc:icyzqltifk6ah7z6l5loztcf,did:plc:4er6jgzl7moxgebsknwe5ojw,did:plc:7pexj6snypvxgpqpakz6moje,did:plc:t55gglt2p7xl26h52hyar2q4,did:plc:k6t4szawepfrgglofzg36t25,did:plc:5fddxrjycrxr4zo24vczvtyy,did:plc:vbusrpqkbs3oiw45z4uehvp4,did:plc:63anvr7ubxw7dkom5es2haag,did:plc:keosgxmesei2n5ht772375vo,did:plc:miz5ysbp4wbx7cdtwnr6ysky,did:plc:vel6lm4zf2ui76adrgpgwhhs,did:plc:rfwzrdmsfekztw7fuzcabug7,did:plc:feaaqebjifbh6pxtf5sk7yda,did:plc:ii6iagbezccwoatqptwlchde,did:plc:77itbicidzonjlu72khaqeh7,did:plc:f7awl4c6w6ypw4dkrvw7b4yi,did:plc:ubahyfz5eeive7oeqjmzctji,did:plc:xl3pf6cwb62uviv4hco7r3jo,did:plc:26tthof4behv4kmwfrrjvchw,did:plc:4shue7ylzx64wu4k67agpkoa,1000
+    at PostgresJsPreparedQuery.queryWithCache (file:///home/cerebreum/bluesky-growth-engine/frontend/node_modules/drizzle-orm/pg-core/session.js:41:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///home/cerebreum/bluesky-growth-engine/frontend/node_modules/drizzle-orm/postgres-js/session.js:37:20
+    at async GET (/home/cerebreum/bluesky-growth-engine/frontend/src/routes/api/graph/+server.ts:24:21)
+    at async render_endpoint (/home/cerebreum/bluesky-growth-engine/frontend/node_modules/@sveltejs/kit/src/runtime/server/endpoint.js:56:20)
+    at async resolve (/home/cerebreum/bluesky-growth-engine/frontend/node_modules/@sveltejs/kit/src/runtime/server/respond.js:461:23)
+    at async fn (file:///home/cerebreum/bluesky-growth-engine/frontend/node_modules/@sveltejs/kit/src/exports/hooks/sequence.js:102:13)
+    at async paraglideMiddleware (/home/cerebreum/bluesky-growth-engine/frontend/src/lib/paraglide/server.js:116:22)
+    at async fn (file:///home/cerebreum/bluesky-growth-engine/frontend/node_modules/@sveltejs/kit/src/exports/hooks/sequence.js:102:13)
+    at async fn (/home/cerebreum/bluesky-growth-engine/frontend/node_modules/@sveltejs/kit/src/runtime/server/respond.js:326:16) {
+  query: 'select "follower_did", "following_did" from "bluesky_follows" where "bluesky_follows"."follower_did" = ANY(($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, $39, $40, $41, $42, $43, $44, $45, $46, $47, $48, $49, $50, $51, $52, $53, $54, $55, $56, $57, $58, $59, $60, $61, $62, $63, $64, $65, $66, $67, $68, $69, $70, $71, $72, $73, $74, $75, $76, $77, $78, $79, $80, $81, $82, $83, $84, $85, $86, $87, $88, $89)) \n' +
+    '            AND "bluesky_follows"."following_did" = ANY(($90, $91, $92, $93, $94, $95, $96, $97, $98, $99, $100, $101, $102, $103, $104, $105, $106, $107, $108, $109, $110, $111, $112, $113, $114, $115, $116, $117, $118, $119, $120, $121, $122, $123, $124, $125, $126, $127, $128, $129, $130, $131, $132, $133, $134, $135, $136, $137, $138, $139, $140, $141, $142, $143, $144, $145, $146, $147, $148, $149, $150, $151, $152, $153, $154, $155, $156, $157, $158, $159, $160, $161, $162, $163, $164, $165, $166, $167, $168, $169, $170, $171, $172, $173, $174, $175, $176, $177, $178)) limit $179',
+  params: [
+    'did:plc:z72i7hdynmk6r22z27h6tvur',
+    'did:plc:p7gxyfr5vii5ntpwo7f6dhe2',
+    'did:plc:oky5czdrnfjpqslsw2a5iclo',
+    'did:plc:6wpkkitfdkgthatfvspcfmjo',
+    'did:plc:ragtjsm2j2vknwkz3zp4oxrd',
+    'did:plc:air6uqdlhdothgnnrgdkldkt',
+    'did:plc:44ybard66vv44zksje25o7dz',
+    'did:plc:ube5kivqggi5ilu2wsayjj5g',
+    'did:plc:2wdi2b35iafydlblfj75du4m',
+    'did:plc:wgkha2dpa2pjv5pvq2zcb4w4',
+    'did:plc:4xs4yrafcqjx4tur5l6z3tbh',
+    'did:plc:spgwnvzb3xdy6rjtlzodcf3s',
+    'did:plc:ug5rp5pwlq3gdwychjhip2hh',
+    'did:plc:qmswljlp5jwxiupngxcgeg5x',
+    'did:plc:gz7kpwzjweoe5ezsaubaasfl',
+    'did:plc:trbkqefqmftwqdk3ehhlbvun',
+    'did:plc:luclt5if4hecw4vus6mxo5rg',
+    'did:plc:sk56vp6kcaaiajfuielpxugq',
+    'did:plc:b2fk6qhywlv4nfr36uuvv46w',
+    'did:plc:46jldlpfb6f4h3qtlblr6nrr',
+    'did:plc:whycfvrwoppxfq42adfryyj5',
+    'did:plc:umv3bg2iiak3zvnbesxpptwl',
+    'did:plc:3nq3ha5olzburl4f4jok3toq',
+    'did:plc:4hzlishmiath4k5dbodospz5',
+    'did:plc:tm4shfn4dox2h242ihgs2ash',
+    'did:plc:z3kom5wghjkyggfviteysvaz',
+    'did:plc:bfyq66wvpdngirzdwjjgvleu',
+    'did:plc:ozqibsfmtvnrxoomhw4yblyp',
+    'did:plc:m5cgb3yu6owrp7nzvxyoipu3',
+    'did:plc:ge2jqquo27pmkvzfdkhdxktm',
+    'did:plc:7t5y2gwrixoue3a2swtj66mk',
+    'did:plc:6d5fwppfow3ltmfnglyid4jx',
+    'did:plc:7xcf6j7xbb6navs6fpwvunkl',
+    'did:plc:oca55mq4uowyichmcerhah3r',
+    'did:plc:7o4l5ogudpczhorsoojshosn',
+    'did:plc:shsth6ackrxqsbeuoyven3dm',
+    'did:plc:vsalt3y7el4zrse53lg5etbm',
+    'did:plc:u65r7csocpcveoro5vromctu',
+    'did:plc:bzf5izikvtpx5ajawy3ke5da',
+    'did:plc:byk62b4f2sxi4qjjtiuheouz',
+    'did:plc:vvic2zox5krgcflqtid2b3iz',
+    'did:plc:rywcbslvkswlntyc2qnajyaa',
+    'did:plc:qwkh2h6ed6h6lj46zuedjsav',
+    'did:plc:eqa26vdj7sg5zvcquqynprnj',
+    'did:plc:hy2rugzcs3gwpbcgafdadisp',
+    'did:plc:hapcm4v3tfyaxbeo5h5u4wwo',
+    'did:plc:xmxqk2mobodtcpxf22ktlkrk',
+    'did:plc:oph7lxbiepoytj5ruymhf6yo',
+    'did:plc:hoqhmgqljhkfyl7hmxz7c42f',
+    'did:plc:rjdggjrrdw7daljz5h462tpm',
+    'did:plc:agaar6qhbb6exns5ukczmt7y',
+    'did:plc:ofzt5urtzk3jn5dh43aubbb6',
+    'did:plc:pnhfxp25xzep65xaodn5x5ni',
+    'did:plc:6eddiachmmxaue7njwltykyz',
+    'did:plc:juvlgl2iirxoqtrvz5nzdbt6',
+    'did:plc:fncom2qtykl6cjg44u4ytuf4',
+    'did:plc:ilebudjlpfj3pgdfqwytn5t2',
+    'did:plc:qpcsldehho7vpwrpm4vyxi4x',
+    'did:plc:qmj4wwav5m42ufq6s4g4sbo3',
+    'did:plc:ozzhs6i6od3xsbuwubsp7bh7',
+    'did:plc:chtwovi7qhl7zko6umcibgk7',
+    'did:plc:cuf56f4zqxk4s3kg2zlanfdo',
+    'did:plc:7jppa3ru7tlg74zxjjtgtc3x',
+    'did:plc:x3e23gvonnsozpvg65nml2gr',
+    'did:plc:pfywyblhox4shuinyvc7ygjz',
+    'did:plc:sr62y4u7e6mm2mliibdb3z6f',
+    'did:plc:v7ex7mdq3ktptdfw7nesv6t4',
+    'did:plc:yyl2m5pyb4r36lg5d3gzkpzw',
+    'did:plc:dv7j7w6fx6l6n4il63n2pg2p',
+    'did:plc:icyzqltifk6ah7z6l5loztcf',
+    'did:plc:4er6jgzl7moxgebsknwe5ojw',
+    'did:plc:7pexj6snypvxgpqpakz6moje',
+    'did:plc:t55gglt2p7xl26h52hyar2q4',
+    'did:plc:k6t4szawepfrgglofzg36t25',
+    'did:plc:5fddxrjycrxr4zo24vczvtyy',
+    'did:plc:vbusrpqkbs3oiw45z4uehvp4',
+    'did:plc:63anvr7ubxw7dkom5es2haag',
+    'did:plc:keosgxmesei2n5ht772375vo',
+    'did:plc:miz5ysbp4wbx7cdtwnr6ysky',
+    'did:plc:vel6lm4zf2ui76adrgpgwhhs',
+    'did:plc:rfwzrdmsfekztw7fuzcabug7',
+    'did:plc:feaaqebjifbh6pxtf5sk7yda',
+    'did:plc:ii6iagbezccwoatqptwlchde',
+    'did:plc:77itbicidzonjlu72khaqeh7',
+    'did:plc:f7awl4c6w6ypw4dkrvw7b4yi',
+    'did:plc:ubahyfz5eeive7oeqjmzctji',
+    'did:plc:xl3pf6cwb62uviv4hco7r3jo',
+    'did:plc:26tthof4behv4kmwfrrjvchw',
+    'did:plc:4shue7ylzx64wu4k67agpkoa',
+    'did:plc:z72i7hdynmk6r22z27h6tvur',
+    'did:plc:p7gxyfr5vii5ntpwo7f6dhe2',
+    'did:plc:oky5czdrnfjpqslsw2a5iclo',
+    'did:plc:6wpkkitfdkgthatfvspcfmjo',
+    'did:plc:ragtjsm2j2vknwkz3zp4oxrd',
+    'did:plc:air6uqdlhdothgnnrgdkldkt',
+    'did:plc:44ybard66vv44zksje25o7dz',
+    'did:plc:ube5kivqggi5ilu2wsayjj5g',
+    'did:plc:2wdi2b35iafydlblfj75du4m',
+    'did:plc:wgkha2dpa2pjv5pvq2zcb4w4',
+    'did:plc:4xs4yrafcqjx4tur5l6z3tbh',
+    ... 79 more items
+  ],
+  cause: PostgresError: op ANY/ALL (array) requires array on right side
+      at ErrorResponse (file:///home/cerebreum/bluesky-growth-engine/frontend/node_modules/postgres/src/connection.js:794:26)
+      at handle (file:///home/cerebreum/bluesky-growth-engine/frontend/node_modules/postgres/src/connection.js:480:6)
+      at Socket.data (file:///home/cerebreum/bluesky-growth-engine/frontend/node_modules/postgres/src/connection.js:315:9)
+      at Socket.emit (node:events:524:28)
+      at addChunk (node:internal/streams/readable:561:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+      at Readable.push (node:internal/streams/readable:392:5)
+      at TCP.onStreamRead (node:internal/stream_base_commons:191:23)
+      at TCP.callbackTrampoline (node:internal/async_hooks:130:17) {
+    severity_local: 'ERROR',
+    severity: 'ERROR',
+    code: '42809',
+    position: '102',
+    file: 'parse_oper.c',
+    line: '814',
+    routine: 'make_scalar_array_op'
+  }
+}
+9:40:12 PM [vite] (client) hmr update /src/app.css
+9:40:12 PM [vite] (ssr) page reload src/routes/api/graph/+server.ts
+9:41:17 PM [vite] (client) page reload .svelte-kit/generated/client/app.js
+9:41:28 PM [vite] (client) hmr update /src/routes/+page.svelte, /src/app.css
+9:41:28 PM [vite] (ssr) page reload src/routes/+page.svelte
+Error fetching analytics: DrizzleQueryError: Failed query: 
+      SELECT 
+        CASE
+          WHEN u.followers_count < 100 THEN '0-100'
+          WHEN u.followers_count < 1000 THEN '100-1K'
+          WHEN u.followers_count < 10000 THEN '1K-10K'
+          WHEN u.followers_count < 100000 THEN '10K-100K'
+          ELSE '100K+'
+        END as follower_tier,
+        COUNT(DISTINCT u.did) as user_count,
+        AVG(p.like_count + p.repost_count + p.reply_count) as avg_engagement,
+        SUM(p.like_count + p.repost_count + p.reply_count) as total_engagement
+      FROM bluesky_users u
+      LEFT JOIN bluesky_posts p ON u.did = p.author_did
+      WHERE p.created_at >= NOW() - INTERVAL '7 days'
+      GROUP BY follower_tier
+      ORDER BY 
+        CASE follower_tier
+          WHEN '0-100' THEN 1
+          WHEN '100-1K' THEN 2
+          WHEN '1K-10K' THEN 3
+          WHEN '10K-100K' THEN 4
+          ELSE 5
+        END
+    
+params: 
+    at PostgresJsPreparedQuery.queryWithCache (file:///home/cerebreum/bluesky-growth-engine/frontend/node_modules/drizzle-orm/pg-core/session.js:41:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async GET (/home/cerebreum/bluesky-growth-engine/frontend/src/routes/api/analytics/+server.ts:49:30)
+    at async render_endpoint (/home/cerebreum/bluesky-growth-engine/frontend/node_modules/@sveltejs/kit/src/runtime/server/endpoint.js:56:20)
+    at async resolve (/home/cerebreum/bluesky-growth-engine/frontend/node_modules/@sveltejs/kit/src/runtime/server/respond.js:461:23)
+    at async fn (file:///home/cerebreum/bluesky-growth-engine/frontend/node_modules/@sveltejs/kit/src/exports/hooks/sequence.js:102:13)
+    at async paraglideMiddleware (/home/cerebreum/bluesky-growth-engine/frontend/src/lib/paraglide/server.js:116:22)
+    at async fn (file:///home/cerebreum/bluesky-growth-engine/frontend/node_modules/@sveltejs/kit/src/exports/hooks/sequence.js:102:13)
+    at async fn (/home/cerebreum/bluesky-growth-engine/frontend/node_modules/@sveltejs/kit/src/runtime/server/respond.js:326:16)
+    at async internal_respond (/home/cerebreum/bluesky-growth-engine/frontend/node_modules/@sveltejs/kit/src/runtime/server/respond.js:308:22) {
+  query: '\n' +
+    '      SELECT \n' +
+    '        CASE\n' +
+    "          WHEN u.followers_count < 100 THEN '0-100'\n" +
+    "          WHEN u.followers_count < 1000 THEN '100-1K'\n" +
+    "          WHEN u.followers_count < 10000 THEN '1K-10K'\n" +
+    "          WHEN u.followers_count < 100000 THEN '10K-100K'\n" +
+    "          ELSE '100K+'\n" +
+    '        END as follower_tier,\n' +
+    '        COUNT(DISTINCT u.did) as user_count,\n' +
+    '        AVG(p.like_count + p.repost_count + p.reply_count) as avg_engagement,\n' +
+    '        SUM(p.like_count + p.repost_count + p.reply_count) as total_engagement\n' +
+    '      FROM bluesky_users u\n' +
+    '      LEFT JOIN bluesky_posts p ON u.did = p.author_did\n' +
+    "      WHERE p.created_at >= NOW() - INTERVAL '7 days'\n" +
+    '      GROUP BY follower_tier\n' +
+    '      ORDER BY \n' +
+    '        CASE follower_tier\n' +
+    "          WHEN '0-100' THEN 1\n" +
+    "          WHEN '100-1K' THEN 2\n" +
+    "          WHEN '1K-10K' THEN 3\n" +
+    "          WHEN '10K-100K' THEN 4\n" +
+    '          ELSE 5\n' +
+    '        END\n' +
+    '    ',
+  params: [],
+  cause: PostgresError: column "follower_tier" does not exist
+      at ErrorResponse (file:///home/cerebreum/bluesky-growth-engine/frontend/node_modules/postgres/src/connection.js:794:26)
+      at handle (file:///home/cerebreum/bluesky-growth-engine/frontend/node_modules/postgres/src/connection.js:480:6)
+      at Socket.data (file:///home/cerebreum/bluesky-growth-engine/frontend/node_modules/postgres/src/connection.js:315:9)
+      at Socket.emit (node:events:524:28)
+      at addChunk (node:internal/streams/readable:561:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+      at Readable.push (node:internal/streams/readable:392:5)
+      at TCP.onStreamRead (node:internal/stream_base_commons:191:23)
+      at TCP.callbackTrampoline (node:internal/async_hooks:130:17) {
+    severity_local: 'ERROR',
+    severity: 'ERROR',
+    code: '42703',
+    position: '698',
+    file: 'parse_relation.c',
+    line: '3665',
+    routine: 'errorMissingColumn'
+  }
+}
+9:45:16 PM [vite] (client) hmr update /src/app.css
+9:45:16 PM [vite] (ssr) page reload src/routes/api/analytics/+server.ts
+9:52:21 PM [vite] (client) hmr update /src/routes/+page.svelte, /src/app.css
+9:52:21 PM [vite] (ssr) page reload src/routes/+page.svelte

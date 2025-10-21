@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
-files=$(git diff --cached --name-only --diff-filter=ACMR)
+files=$(git diff --cached --name-only --diff-filter=ACMR | grep -v node_modules)
 [ -z "$files" ] && exit 0
 npx --yes secretlint --maskSecrets $files
