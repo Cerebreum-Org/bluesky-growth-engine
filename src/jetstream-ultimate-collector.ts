@@ -13,6 +13,7 @@ import 'dotenv/config';
 import { Jetstream } from '@skyware/jetstream';
 import WebSocket from 'ws';
 import { createClient } from '@supabase/supabase-js';
+import { CircuitBreaker } from './shared/CircuitBreaker';
 import {
   extractMentions,
   extractHashtags,
@@ -49,6 +50,51 @@ const hashtagQueue: Map<string, any> = new Map();
 const linkQueue: Map<string, any> = new Map();
 const mediaQueue: Map<string, any> = new Map();
 const activityPatternQueue: Map<string, any> = new Map();
+
+
+// Reliability: circuit breaker, retry + DLQ for Supabase writes
+const supabaseBreaker = new CircuitBreaker('supabase-batch', {
+  failureThreshold: 5,
+  recoveryTimeout: 20000,
+  monitorTimeout: 5000,
+});
+
+function sleep(ms: number) { return new Promise((r) => setTimeout(r, ms)); }
+const deadLetterQueue: Array<{ table: string; payload: any; error: string; ts: string }> = [];
+
+async function upsertWithRetry(table: string, rows: any[], onConflict: string, attempts = 3) {
+  if (!rows.length) return;
+  let lastErr: string | null = null;
+  for (let i = 1; i <= attempts; i++) {
+    const res = await supabaseBreaker.execute(async () => {
+      const { error } = await supabase.from(table).upsert(rows, { onConflict, ignoreDuplicates: false });
+      if (error) throw new Error(error.message);
+      return true;
+    });
+    if (res.success) return;
+    lastErr = res.error as string;
+    const backoff = Math.min(1000 * Math.pow(2, i - 1) + Math.floor(Math.random() * 250), 5000);
+    console.warn(`⚠️  ${table} upsert failed (attempt ${i}/${attempts}): ${res.error}. Retrying in ${backoff}ms`);
+    await sleep(backoff);
+  }
+  deadLetterQueue.push({ table, payload: rows, error: lastErr || 'unknown', ts: new Date().toISOString() });
+}
+
+async function flushDeadLetters() {
+  if (!deadLetterQueue.length) return;
+  const batch = deadLetterQueue.splice(0, deadLetterQueue.length);
+  try {
+    const { error } = await supabase.from('bluesky_dead_letters').insert(batch.map(d => ({
+      table: d.table,
+      payload: JSON.stringify(d.payload),
+      error: d.error,
+      created_at: d.ts,
+    })));
+    if (error) console.error('DLQ insert error', error.message);
+  } catch (e) {
+    console.error('DLQ unexpected error', e);
+  }
+}
 
 // NEW COLLECTION QUEUES
 const feedGeneratorQueue: Map<string, any> = new Map();
@@ -90,9 +136,11 @@ async function flushUsers() {
 
   const { error } = await supabase
     .from('bluesky_users')
-    .upsert(users, { onConflict: 'did', ignoreDuplicates: true });
+    .select('did').limit(1);
 
-  if (!error) {
+  await upsertWithRetry('bluesky_users', users, 'did');
+
+  if (users.length) {
     totalUsers += users.length;
     console.log(`✓ Users: +${users.length} (${totalUsers} total)`);
   } else {
@@ -107,11 +155,9 @@ async function flushPosts() {
     const posts = Array.from(postQueue.values());
     postQueue.clear();
 
-    const { error } = await supabase
-      .from('bluesky_posts')
-      .upsert(posts, { onConflict: 'uri', ignoreDuplicates: true });
+    await upsertWithRetry('bluesky_posts', posts, 'uri');
 
-    if (!error) {
+    if (posts.length) {
       totalPosts += posts.length;
       console.log(`✓ Posts: +${posts.length} (${totalPosts} total)`);
     } else {
@@ -127,11 +173,9 @@ async function flushLikes() {
   const likes = Array.from(likeQueue.values());
   likeQueue.clear();
 
-  const { error } = await supabase
-    .from('bluesky_likes')
-    .upsert(likes, { onConflict: 'uri', ignoreDuplicates: true });
+  await upsertWithRetry('bluesky_likes', likes, 'uri');
 
-  if (!error) {
+  if (likes.length) {
     totalLikes += likes.length;
     console.log(`✓ Likes: +${likes.length} (${totalLikes} total)`);
   } else {
@@ -144,11 +188,9 @@ async function flushReposts() {
   const reposts = Array.from(repostQueue.values());
   repostQueue.clear();
 
-  const { error } = await supabase
-    .from('bluesky_reposts')
-    .upsert(reposts, { onConflict: 'uri', ignoreDuplicates: true });
+  await upsertWithRetry('bluesky_reposts', reposts, 'uri');
 
-  if (!error) {
+  if (reposts.length) {
     totalReposts += reposts.length;
     console.log(`✓ Reposts: +${reposts.length} (${totalReposts} total)`);
   } else {
@@ -161,11 +203,9 @@ async function flushBlocks() {
   const blocks = Array.from(blockQueue.values());
   blockQueue.clear();
 
-  const { error } = await supabase
-    .from('bluesky_blocks')
-    .upsert(blocks, { onConflict: 'uri', ignoreDuplicates: true });
+  await upsertWithRetry('bluesky_blocks', blocks, 'uri');
 
-  if (!error) {
+  if (blocks.length) {
     totalBlocks += blocks.length;
     console.log(`✓ Blocks: +${blocks.length} (${totalBlocks} total) 🚫`);
   } else {
@@ -178,11 +218,9 @@ async function flushLists() {
   const lists = Array.from(listQueue.values());
   listQueue.clear();
 
-  const { error } = await supabase
-    .from('bluesky_lists')
-    .upsert(lists, { onConflict: 'uri', ignoreDuplicates: true });
+  await upsertWithRetry('bluesky_lists', lists, 'uri');
 
-  if (!error) {
+  if (lists.length) {
     totalLists += lists.length;
     console.log(`✓ Lists: +${lists.length} (${totalLists} total) 📋`);
   } else {
@@ -195,11 +233,9 @@ async function flushListItems() {
   const listItems = Array.from(listItemQueue.values());
   listItemQueue.clear();
 
-  const { error } = await supabase
-    .from('bluesky_list_items')
-    .upsert(listItems, { onConflict: 'uri', ignoreDuplicates: true });
+  await upsertWithRetry('bluesky_list_items', listItems, 'uri');
 
-  if (!error) {
+  if (listItems.length) {
     totalListItems += listItems.length;
     console.log(`✓ List Items: +${listItems.length} (${totalListItems} total)`);
   } else {
@@ -214,11 +250,9 @@ async function flushThreads() {
   const threads = Array.from(threadQueue.values());
   threadQueue.clear();
 
-  const { error } = await supabase
-    .from('bluesky_threads')
-    .upsert(threads, { onConflict: 'post_uri', ignoreDuplicates: false });
+  await upsertWithRetry('bluesky_threads', threads, 'post_uri');
 
-  if (!error) {
+  if (threads.length) {
     totalThreads += threads.length;
     console.log(`✓ Threads: +${threads.length} (${totalThreads} total) 🧵`);
   } else {
@@ -231,11 +265,9 @@ async function flushMentions() {
   const mentions = Array.from(mentionQueue.values());
   mentionQueue.clear();
 
-  const { error } = await supabase
-    .from('bluesky_mentions')
-    .insert(mentions);
+  await upsertWithRetry('bluesky_mentions', mentions, 'id');
 
-  if (!error) {
+  if (mentions.length) {
     totalMentions += mentions.length;
     console.log(`✓ Mentions: +${mentions.length} (${totalMentions} total) @`);
   } else {
@@ -248,11 +280,9 @@ async function flushHashtags() {
   const hashtags = Array.from(hashtagQueue.values());
   hashtagQueue.clear();
 
-  const { error } = await supabase
-    .from('bluesky_hashtags')
-    .insert(hashtags);
+  await upsertWithRetry('bluesky_hashtags', hashtags, 'id');
 
-  if (!error) {
+  if (hashtags.length) {
     totalHashtags += hashtags.length;
     console.log(`✓ Hashtags: +${hashtags.length} (${totalHashtags} total) #️⃣`);
   } else {
@@ -265,11 +295,9 @@ async function flushLinks() {
   const links = Array.from(linkQueue.values());
   linkQueue.clear();
 
-  const { error } = await supabase
-    .from('bluesky_links')
-    .insert(links);
+  await upsertWithRetry('bluesky_links', links, 'id');
 
-  if (!error) {
+  if (links.length) {
     totalLinks += links.length;
     console.log(`✓ Links: +${links.length} (${totalLinks} total) 🔗`);
   } else {
@@ -282,11 +310,9 @@ async function flushMedia() {
   const media = Array.from(mediaQueue.values());
   mediaQueue.clear();
 
-  const { error } = await supabase
-    .from('bluesky_media')
-    .insert(media);
+  await upsertWithRetry('bluesky_media', media, 'id');
 
-  if (!error) {
+  if (media.length) {
     totalMedia += media.length;
     console.log(`✓ Media: +${media.length} (${totalMedia} total) 🖼️`);
   } else {
