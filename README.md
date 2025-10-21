@@ -1,6 +1,6 @@
 # Bluesky Growth Engine
 
-Growth engine for `neoreactionary.bsky.social` built on the AT Protocol.
+Growth engine built on the AT Protocol.
 
 ## Setup
 
