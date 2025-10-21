@@ -50,6 +50,12 @@ const linkQueue: Map<string, any> = new Map();
 const mediaQueue: Map<string, any> = new Map();
 const activityPatternQueue: Map<string, any> = new Map();
 
+// NEW COLLECTION QUEUES
+const feedGeneratorQueue: Map<string, any> = new Map();
+const threadgateQueue: Map<string, any> = new Map();
+const starterpackQueue: Map<string, any> = new Map();
+const labelerServiceQueue: Map<string, any> = new Map();
+
 // Enhanced statistics
 let totalUsers = 0;
 let totalPosts = 0;
@@ -308,6 +314,40 @@ async function flushActivityPatterns() {
 }
 
 // Enhanced flush all function
+
+
+async function flushFeedGenerators() {
+  if (feedGeneratorQueue.size === 0) return;
+  const rows = Array.from(feedGeneratorQueue.values());
+  feedGeneratorQueue.clear();
+  const { error } = await supabase.from('bluesky_feed_generators').upsert(rows, { onConflict: 'uri', ignoreDuplicates: false });
+  if (error) console.error('feed_generators error', error.message);
+}
+
+async function flushThreadgates() {
+  if (threadgateQueue.size === 0) return;
+  const rows = Array.from(threadgateQueue.values());
+  threadgateQueue.clear();
+  const { error } = await supabase.from('bluesky_threadgates').upsert(rows, { onConflict: 'post_uri', ignoreDuplicates: false });
+  if (error) console.error('threadgates error', error.message);
+}
+
+async function flushStarterPacks() {
+  if (starterpackQueue.size === 0) return;
+  const rows = Array.from(starterpackQueue.values());
+  starterpackQueue.clear();
+  const { error } = await supabase.from('bluesky_starterpacks').upsert(rows, { onConflict: 'uri', ignoreDuplicates: false });
+  if (error) console.error('starterpacks error', error.message);
+}
+
+async function flushLabelerServices() {
+  if (labelerServiceQueue.size === 0) return;
+  const rows = Array.from(labelerServiceQueue.values());
+  labelerServiceQueue.clear();
+  const { error } = await supabase.from('bluesky_labeler_services').upsert(rows, { onConflict: 'uri', ignoreDuplicates: false });
+  if (error) console.error('labeler services error', error.message);
+}
+
 async function flushAll() {
   console.log('\n📊 Ultimate Stats:');
   console.log(`   Events: ${totalEvents} | Users: ${totalUsers} | Posts: ${totalPosts}`);
@@ -321,6 +361,11 @@ async function flushAll() {
   await Promise.all([
     // Existing flushes
     flushUsers(),
+    // New collection flushes
+    flushFeedGenerators(),
+    flushThreadgates(),
+    flushStarterPacks(),
+    flushLabelerServices(),
     flushPosts(),
     flushLikes(),
     flushReposts(),
@@ -578,7 +623,17 @@ async function startCollector() {
     try {
       const rec: any = (event.commit as any).record || {};
       totalFeedGenerators++;
-      console.log(`🧪 Feed Generator: ${(rec.displayName||'unknown')} by ${event.did}`);
+      feedGeneratorQueue.set(event.commit.rkey, {
+      uri: `at://${event.did}/app.bsky.feed.generator/${event.commit.rkey}`,
+      owner_did: event.did,
+      display_name: rec.displayName,
+      description: rec.description,
+      avatar_link: rec.avatar?.ref?.$link,
+      accepts_interactions: !!rec.acceptsInteractions,
+      labels: rec.labels ? JSON.stringify(rec.labels) : null,
+      created_at: rec.createdAt,
+      indexed_at: new Date().toISOString()
+    });
     } catch (e) {
       console.error('feed.generator handler error', e);
     }
@@ -590,7 +645,13 @@ async function startCollector() {
     try {
       const rec: any = (event.commit as any).record || {};
       totalThreadgates++;
-      console.log(`🚧 Threadgate for post ${rec.post} (by ${event.did})`);
+      threadgateQueue.set(event.commit.rkey, {
+      post_uri: rec.post,
+      owner_did: event.did,
+      allow: rec.allow ? JSON.stringify(rec.allow) : null,
+      created_at: rec.createdAt,
+      indexed_at: new Date().toISOString()
+    });
     } catch (e) {
       console.error('threadgate handler error', e);
     }
@@ -602,7 +663,19 @@ async function startCollector() {
     try {
       const rec: any = (event.commit as any).record || {};
       totalStarterPacks++;
-      console.log(`🎒 Starter pack ${(rec.name||'unnamed')} by ${event.did}`);
+      starterpackQueue.set(event.commit.rkey, {
+      uri: `at://${event.did}/app.bsky.graph.starterpack/${event.commit.rkey}`,
+      owner_did: event.did,
+      name: rec.name,
+      description: rec.description,
+      list_uri: rec.list,
+      feeds: rec.feeds ? JSON.stringify(rec.feeds) : null,
+      joined_week_count: rec.joinedWeekCount || 0,
+      joined_all_time_count: rec.joinedAllTimeCount || 0,
+      labels: rec.labels ? JSON.stringify(rec.labels) : null,
+      created_at: rec.indexedAt || new Date().toISOString(),
+      indexed_at: new Date().toISOString()
+    });
     } catch (e) {
       console.error('starterpack handler error', e);
     }
@@ -614,7 +687,13 @@ async function startCollector() {
     try {
       const rec: any = (event.commit as any).record || {};
       totalLabelerServices++;
-      console.log(`🏷️ Labeler service by ${event.did} (labels: ${Array.isArray(rec?.policies?.labelValues) ? rec.policies.labelValues.length : 0})`);
+      labelerServiceQueue.set(event.commit.rkey, {
+      uri: `at://${event.did}/app.bsky.labeler.service/${event.commit.rkey}`,
+      owner_did: event.did,
+      policies: rec.policies ? JSON.stringify(rec.policies) : null,
+      created_at: rec.createdAt,
+      indexed_at: new Date().toISOString()
+    });
     } catch (e) {
       console.error('labeler.service handler error', e);
     }
