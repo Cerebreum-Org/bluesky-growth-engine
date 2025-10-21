@@ -26,7 +26,8 @@
     "collect:engagement": "tsx src/engagement-collector.ts",
     "db:migrate": "tsx run-migration.ts",
     "collector:ultimate": "tsx src/jetstream-ultimate-collector.ts",
-    "approve-builds": "echo \"Run: npx pnpm approve-builds\""
+    "approve-builds": "echo \"Run: npx pnpm approve-builds\"",
+    "backfill:enrichment": "tsx src/backfill-enrichment-from-posts.ts"
   },
   "keywords": [],
   "author": "",
