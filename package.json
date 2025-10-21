@@ -49,5 +49,6 @@
     "https-proxy-agent": "^7.0.6",
     "pg": "^8.16.3",
     "ws": "^8.18.3"
-  }
+  },
+  "packageManager": "pnpm@10.18.3"
 }
