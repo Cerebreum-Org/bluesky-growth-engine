@@ -69,6 +69,13 @@ let totalHashtags = 0;
 let totalLinks = 0;
 let totalMedia = 0;
 
+// NEW COLLECTION COUNTERS
+let totalFeedGenerators = 0;
+let totalThreadgates = 0;
+let totalStarterPacks = 0;
+let totalLabelerServices = 0;
+
+
 // Existing flush functions (keeping them unchanged)
 async function flushUsers() {
   if (userQueue.size === 0) return;
@@ -440,6 +447,10 @@ async function startCollector() {
       'app.bsky.graph.list',
       'app.bsky.graph.listitem',
       'app.bsky.actor.profile',
+      'app.bsky.feed.generator',
+      'app.bsky.feed.threadgate',
+      'app.bsky.graph.starterpack',
+      'app.bsky.labeler.service',
     ],
   });
 
@@ -559,6 +570,55 @@ async function startCollector() {
     });
   });
 
+
+
+  // NEW: Feed generator declarations
+  jetstream.onCreate('app.bsky.feed.generator', (event) => {
+    totalEvents++;
+    try {
+      const rec: any = (event.commit as any).record || {};
+      totalFeedGenerators++;
+      console.log(`🧪 Feed Generator: ${(rec.displayName||'unknown')} by ${event.did}`);
+    } catch (e) {
+      console.error('feed.generator handler error', e);
+    }
+  });
+
+  // NEW: Threadgate (reply controls)
+  jetstream.onCreate('app.bsky.feed.threadgate', (event) => {
+    totalEvents++;
+    try {
+      const rec: any = (event.commit as any).record || {};
+      totalThreadgates++;
+      console.log(`🚧 Threadgate for post ${rec.post} (by ${event.did})`);
+    } catch (e) {
+      console.error('threadgate handler error', e);
+    }
+  });
+
+  // NEW: Starter packs
+  jetstream.onCreate('app.bsky.graph.starterpack', (event) => {
+    totalEvents++;
+    try {
+      const rec: any = (event.commit as any).record || {};
+      totalStarterPacks++;
+      console.log(`🎒 Starter pack ${(rec.name||'unnamed')} by ${event.did}`);
+    } catch (e) {
+      console.error('starterpack handler error', e);
+    }
+  });
+
+  // NEW: Labeler services
+  jetstream.onCreate('app.bsky.labeler.service', (event) => {
+    totalEvents++;
+    try {
+      const rec: any = (event.commit as any).record || {};
+      totalLabelerServices++;
+      console.log(`🏷️ Labeler service by ${event.did} (labels: ${Array.isArray(rec?.policies?.labelValues) ? rec.policies.labelValues.length : 0})`);
+    } catch (e) {
+      console.error('labeler.service handler error', e);
+    }
+  });
   // Start the collector
   jetstream.start();
   console.log('✅ Ultimate Collector started with enhanced data processing!');
