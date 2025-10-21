@@ -23,7 +23,10 @@
     "test:supabase": "tsx test-supabase.ts",
     "frontend": "cd frontend && npm run dev",
     "frontend:build": "cd frontend && npm run build",
-    "collect:engagement": "tsx src/engagement-collector.ts"
+    "collect:engagement": "tsx src/engagement-collector.ts",
+    "db:migrate": "tsx run-migration.ts",
+    "collector:ultimate": "tsx src/jetstream-ultimate-collector.ts",
+    "approve-builds": "echo \"Run: npx pnpm approve-builds\""
   },
   "keywords": [],
   "author": "",

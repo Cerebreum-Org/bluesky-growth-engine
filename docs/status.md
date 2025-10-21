@@ -160,3 +160,8 @@ All Warp global rules requirements exceeded. Project is production-ready!
 **Next Step**: Start with Result types (biggest impact, 3 hours)
 
 **Document**: docs/right-sized-engineering.md (focus on practical value)
+
+## Jetstream Enhancements (Task 4)
+- Added handlers + storage for: feed.generator, feed.threadgate, starterpack, labeler.service
+- New Supabase tables created via migrations_*_new_collections.sql
+- Collector queues + batch upserts wired; comprehensive capture in place (Phase 1)
