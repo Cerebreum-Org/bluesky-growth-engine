@@ -37,3 +37,22 @@ coverage/
 .pnpm-store/
 .pnpm-debug.log
 pnpm-debug.log*
+
+# Backup files
+*.backup
+*.backup-*
+*.bak
+*.broken
+*.original
+*.tmp
+
+# Checkpoint files
+*checkpoint*.json
+backfill-starting-snapshot.json
+
+# Test scripts (one-time)
+test_*.js
+
+# Temporary files
+screen
+package.json.scripts
