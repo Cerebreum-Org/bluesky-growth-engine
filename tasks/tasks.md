@@ -119,7 +119,6 @@ Begin with Result types implementation - highest ROI for time invested.
 - [x] Analyze current backfill scripts
 - [x] Design comprehensive data collection strategy
 - [x] Enhance Jetstream collector for comprehensive capture — completed (handlers+storage for generator/threadgate/starterpack/labeler, enrichment tables, quote chains)
-- [ ] Enhance backfill scripts for comprehensive historical data
-- [ ] Integrate reliability patterns into collectors
+- [ ] Enhance backfill scripts for comprehensive historical data- [x] Integrate reliability patterns into collectors
 - [ ] Test enhanced collection systems
 - [ ] Document collection capabilities
