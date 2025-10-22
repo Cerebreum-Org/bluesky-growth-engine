@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  collector:
+    image: node:20-slim
+    container_name: bluesky-collector
+    working_dir: /app
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      - SUPABASE_URL=http://kong:8000
+    networks:
+      - supabase_default
+    command: npx tsx src/jetstream-ultimate-collector.ts
+    restart: unless-stopped
+
+networks:
+  supabase_default:
+    external: true
