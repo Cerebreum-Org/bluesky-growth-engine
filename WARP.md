@@ -81,3 +81,32 @@ See `supabase/README.md` for setup instructions. Run `supabase/schema.sql` in yo
 - Top-level errors in `main()` exit with code 1
 - Per-action errors in strategies are caught, logged, and continue execution
 - Always log action results for debugging (e.g., "Followed @handle")
+
+## Database Rules
+
+### Source of Truth Database
+
+**CRITICAL:** The **only** database to use for this project is the `supabase-db` Docker container.
+
+- **Container Name:** `supabase-db`
+- **Access:** Via `supabase-kong` on port 8000 or direct container access
+- **Data:** Contains 3.4M+ bluesky users in production tables
+- **Studio Access:** `http://100.69.129.86:3001` (via Tailscale)
+
+**Do NOT use:**
+- Any `supabase_*_bluesky-growth-engine` containers (removed)
+- Local dev databases on different ports
+- Any other PostgreSQL instances
+
+When working with the database:
+1. Always verify you're connected to `supabase-db`
+2. Check table names match the production schema (e.g., `public.bluesky_users`)
+3. Use the Supabase client configured with `SUPABASE_URL=http://100.69.129.86:8000`
+
+
+## Code Organization (Updated 2025-10-22)
+
+- Moved 22 old script iterations to src/archive/
+- Use git branches/commits for future changes, not new files
+- See GIT_WORKFLOW.md for guidelines
+CRITICAL: Warp Terminal Heredoc Bug - Never use heredoc syntax (cat << EOF or similar) as it causes Warp to hang. Instead use: echo commands, printf, or write to temp file then copy. Alternative: use Python/Node to write multi-line files.

@@ -1,3 +1,4 @@
+import 'dotenv/config';
 /**
  * Jetstream Ultimate Collector - Refactored
  * 
