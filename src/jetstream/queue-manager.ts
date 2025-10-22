@@ -4,7 +4,7 @@
  * Manages batched writes to Supabase with reliability patterns
  */
 
-import { supabase } from '../supabase-enhanced.js';
+import { supabase } from '../supabase.js';
 
 const RETRY_ATTEMPTS = 3;
 
