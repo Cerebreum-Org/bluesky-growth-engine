@@ -124,7 +124,7 @@ async function checkProgress() {
   }
 
   // Top users by posts
-  const { data: topPosters } = await supabase
+  const { data: topPosters }: { data: any } = await supabase
     .from('bluesky_posts')
     .select('author_did, count(*)')
     .limit(5);

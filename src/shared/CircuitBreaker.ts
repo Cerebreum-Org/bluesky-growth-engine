@@ -28,8 +28,8 @@
  * ```
  */
 
-import { Result, Ok, Err } from "./Result.js";
-import { Logger } from "./Logger.js";
+import { Result, Ok, Err } from "./Result";
+import { Logger } from "./Logger";
 
 export type CircuitState = "closed" | "open" | "half-open";
 

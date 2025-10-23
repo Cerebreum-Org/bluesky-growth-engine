@@ -115,6 +115,7 @@ async function startFirehose() {
   console.log('This will capture ALL Bluesky users in real-time.\n');
 
   const firehose = new Firehose({
+    idResolver: {} as any,
     service: RELAY_URL,
     onError: (err) => {
       console.error('Firehose error:', err);

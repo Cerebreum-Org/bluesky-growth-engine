@@ -9,17 +9,23 @@ import { Logger } from "./shared/Logger";
 import { ApiResponseBuilder } from "./shared/ApiResponse";
 import { apiRateLimit } from "./shared/RateLimit";
 import { healthChecker } from "./shared/HealthCheck";
+import { unwrap } from "./shared/Result";
 
 const logger = Logger.create("ApiServer");
 
 // Load configuration at startup
-const appConfig = config.load();
+const appConfigResult = config.load();
+if (!appConfigResult.ok) {
+  logger.error("Failed to load configuration", { error: appConfigResult.error });
+  process.exit(1);
+}
+const appConfig = appConfigResult.value;
+
 logger.info("API Server configuration loaded", {
   port: appConfig.server.port,
   environment: appConfig.server.environment,
   rate_limiting_enabled: appConfig.features.enableRateLimit
 });
-
 const app = express();
 const PORT = appConfig.server.port;
 const HOST = process.env.API_HOST || "0.0.0.0";

@@ -4,28 +4,31 @@ import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
-const JETSTREAM_SCRIPT = '/home/cerebreum/bluesky-growth-engine/src/jetstream-final.ts';
-const PROJECT_DIR = '/home/cerebreum/bluesky-growth-engine';
-
-async function getJetstreamStatus() {
+async function getCollectorStatus() {
   try {
-    const { stdout } = await execAsync('ps aux | grep jetstream-final.ts | grep -v grep');
+    // Check if the Docker collector is running
+    const { stdout } = await execAsync('docker ps --filter "name=bluesky-collector" --format "{{.Names}}\t{{.Status}}"');
     const lines = stdout.trim().split('\n').filter(l => l.length > 0);
     
-    if (lines.length > 0) {
-      const match = lines[0].match(/^\S+\s+(\d+)/);
-      const pid = match ? parseInt(match[1]) : null;
-      return { running: true, pid, processCount: lines.length };
+    if (lines.length > 0 && lines[0].includes('bluesky-collector')) {
+      const status = lines[0].split('\t')[1];
+      const isHealthy = status.includes('healthy');
+      return { 
+        running: true, 
+        container: 'bluesky-collector', 
+        status,
+        healthy: isHealthy
+      };
     }
-    return { running: false, pid: null, processCount: 0 };
+    return { running: false, container: null, status: 'stopped', healthy: false };
   } catch (error) {
-    return { running: false, pid: null, processCount: 0 };
+    return { running: false, container: null, status: 'error', healthy: false };
   }
 }
 
 export async function GET() {
   try {
-    const status = await getJetstreamStatus();
+    const status = await getCollectorStatus();
     return NextResponse.json(status, { status: 200 });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'status_check_failed' }, { status: 500 });
@@ -38,31 +41,35 @@ export async function POST(request: Request) {
     const { action } = body;
 
     if (action === 'start') {
-      const status = await getJetstreamStatus();
+      const status = await getCollectorStatus();
       if (status.running) {
         return NextResponse.json({ error: 'already_running', status }, { status: 400 });
       }
 
-      const command = `cd ${PROJECT_DIR} && nohup npm exec tsx ${JETSTREAM_SCRIPT} > /tmp/jetstream.log 2>&1 & echo $!`;
-      const { stdout } = await execAsync(command);
-      const pid = parseInt(stdout.trim());
-      
+      await execAsync('docker start bluesky-collector');
       await new Promise(resolve => setTimeout(resolve, 2000));
-      const newStatus = await getJetstreamStatus();
+      const newStatus = await getCollectorStatus();
       
-      return NextResponse.json({ success: true, pid, status: newStatus }, { status: 200 });
+      return NextResponse.json({ success: true, status: newStatus }, { status: 200 });
     }
 
     if (action === 'stop') {
-      const status = await getJetstreamStatus();
+      const status = await getCollectorStatus();
       if (!status.running) {
         return NextResponse.json({ error: 'not_running', status }, { status: 400 });
       }
 
-      await execAsync(`pkill -f 'jetstream-final.ts'`);
-      
+      await execAsync('docker stop bluesky-collector');
       await new Promise(resolve => setTimeout(resolve, 2000));
-      const newStatus = await getJetstreamStatus();
+      const newStatus = await getCollectorStatus();
+      
+      return NextResponse.json({ success: true, status: newStatus }, { status: 200 });
+    }
+
+    if (action === 'restart') {
+      await execAsync('docker restart bluesky-collector');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      const newStatus = await getCollectorStatus();
       
       return NextResponse.json({ success: true, status: newStatus }, { status: 200 });
     }

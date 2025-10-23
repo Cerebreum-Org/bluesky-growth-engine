@@ -27,7 +27,8 @@
     "db:migrate": "tsx run-migration.ts",
     "collector:ultimate": "tsx src/jetstream-ultimate-collector.ts",
     "approve-builds": "echo \"Run: npx pnpm approve-builds\"",
-    "backfill:enrichment": "tsx src/backfill-enrichment-from-posts.ts"
+    "backfill:enrichment": "tsx src/backfill-enrichment-from-posts.ts",
+    "backfill:comprehensive": "tsx src/comprehensive-backfill.ts"
   },
   "keywords": [],
   "author": "",
@@ -36,6 +37,9 @@
   "private": true,
   "devDependencies": {
     "@secretlint/secretlint-rule-preset-recommend": "^11.2.5",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/pg": "^8.15.5",
     "@typescript-eslint/eslint-plugin": "^8.46.1",
     "@typescript-eslint/parser": "^8.46.1",
     "eslint": "^9.37.0",

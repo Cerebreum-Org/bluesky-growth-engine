@@ -8,9 +8,7 @@ import 'dotenv/config';
 
 import { Jetstream } from '@skyware/jetstream';
 import WebSocket from 'ws';
-import { queues, flushAll } from './jetstream/queue-manager';
-import { startResourceMonitor, shouldDropEvent, isIngestPaused } from './jetstream/resource-monitor';
-import { recordEventReceived, recordEventProcessed, recordBackpressure, recordFlush, startHealthMonitoring } from './jetstream/collector-metrics';
+import { queues, flushAll } from './jetstream/queue-manager.js';
 
 const FLUSH_INTERVAL = 5000; // 5 seconds
 const BATCH_SIZE = 500;
@@ -32,29 +30,6 @@ const collections = [
 let eventCount = 0;
 let lastFlushTime = Date.now();
 
-
-const RECENT_USERS_CACHE = 50000;
-const _recentUsersSet = new Set<string>();
-const _recentUsersQueue: string[] = [];
-function addUserOnce(did: string) {
-  if (!did) return;
-  if (_recentUsersSet.has(did)) return;
-  _recentUsersSet.add(did);
-  _recentUsersQueue.push(did);
-  if (_recentUsersQueue.length > RECENT_USERS_CACHE) {
-    const old = _recentUsersQueue.shift();
-    if (old) _recentUsersSet.delete(old);
-  }
-  queues.users.push({
-    did,
-    handle: null,
-    display_name: null,
-    avatar: null,
-    indexed_at: new Date().toISOString(),
-  });
-}
-
-
 function shouldFlush(): boolean {
   const queueSize = Object.values(queues).reduce((sum, q) => sum + q.length, 0);
   const timeSinceFlush = Date.now() - lastFlushTime;
@@ -62,23 +37,17 @@ function shouldFlush(): boolean {
 }
 
 async function handleCommit(event: any) {
-  recordEventReceived();
-  const startTime = Date.now();
-  // Apply backpressure: if queues full, flush synchronously before processing
-  // This ensures NO DATA LOSS - we block event processing until queues drain
-  if (shouldDropEvent()) {
-    // Record backpressure event
-    const queueSize = Object.values(queues).reduce((sum, q) => sum + q.length, 0);
-    recordBackpressure(queueSize);
-    // Flush all queues synchronously to make room
-    await flushAll();
-  }
   eventCount++;
-  recordEventProcessed(Date.now() - startTime);
   
   try {
-    // Queue user once (deduped)
-    addUserOnce(event.did);
+    // Queue user
+    queues.users.push({
+      did: event.did,
+      handle: null,
+      display_name: null,
+      avatar: null,
+      indexed_at: new Date().toISOString(),
+    });
 
     const collection = event.commit?.collection;
     const record = event.commit?.record;
@@ -125,15 +94,7 @@ async function handleCommit(event: any) {
 
     // Auto-flush when needed
     if (shouldFlush()) {
-      const flushStart = Date.now();
-      try {
-        await flushAll();
-        const queueSize = Object.values(queues).reduce((sum, q) => sum + q.length, 0);
-        recordFlush(Date.now() - flushStart, true, queueSize);
-      } catch (e) {
-        recordFlush(Date.now() - flushStart, false, 0);
-        throw e;
-      }
+      await flushAll();
       lastFlushTime = Date.now();
       console.log(`Flushed at ${eventCount} events`);
     }
@@ -147,7 +108,6 @@ function handlePost(event: any, uri: string, record: any, createdAt: string) {
     uri,
     cid: event.commit.cid,
     author_did: event.did,
-    created_at: createdAt,
     text: record.text || '',
     reply_parent: record.reply?.parent?.uri || null,
     reply_root: record.reply?.root?.uri || null,
@@ -167,7 +127,6 @@ function handleLike(event: any, uri: string, record: any, createdAt: string) {
   queues.likes.push({
     uri,
     author_did: event.did,
-    created_at: createdAt,
     subject_uri: record.subject?.uri || null,
     subject_cid: record.subject?.cid || null,
     indexed_at: new Date().toISOString(),
@@ -178,7 +137,6 @@ function handleRepost(event: any, uri: string, record: any, createdAt: string) {
   queues.reposts.push({
     uri,
     author_did: event.did,
-    created_at: createdAt,
     subject_uri: record.subject?.uri || null,
     subject_cid: record.subject?.cid || null,
     indexed_at: new Date().toISOString(),
@@ -186,15 +144,10 @@ function handleRepost(event: any, uri: string, record: any, createdAt: string) {
 }
 
 function handleBlock(event: any, uri: string, record: any, createdAt: string) {
-  // ensure users for FK
-  queues.users.push({ did: event.did, indexed_at: new Date().toISOString() });
-  if (record.subject) queues.users.push({ did: record.subject, indexed_at: new Date().toISOString() });
-
   queues.blocks.push({
     uri,
-    blocker_did: event.did,
-    created_at: createdAt,
-    blocked_did: record.subject || null,
+    author_did: event.did,
+    subject_did: record.subject || null,
     indexed_at: new Date().toISOString(),
   });
 }
@@ -202,8 +155,7 @@ function handleBlock(event: any, uri: string, record: any, createdAt: string) {
 function handleList(event: any, uri: string, record: any, createdAt: string) {
   queues.lists.push({
     uri,
-    creator_did: event.did,
-    created_at: createdAt,
+    author_did: event.did,
     name: record.name || null,
     purpose: record.purpose || null,
     description: record.description || null,
@@ -212,14 +164,10 @@ function handleList(event: any, uri: string, record: any, createdAt: string) {
 }
 
 function handleListItem(event: any, uri: string, record: any, createdAt: string) {
-  // ensure user exists for subject_did FK
-  if (record.subject) queues.users.push({ did: record.subject, indexed_at: new Date().toISOString() });
-
   queues.listItems.push({
     uri,
     list_uri: record.list || null,
     subject_did: record.subject || null,
-    created_at: createdAt,
     indexed_at: new Date().toISOString(),
   });
 }
@@ -236,10 +184,9 @@ function handleFeedGenerator(event: any, uri: string, record: any, createdAt: st
 
 function handleThreadgate(event: any, uri: string, record: any, createdAt: string) {
   queues.threadgates.push({
+    uri,
     post_uri: record.post || null,
-    owner_did: event.did,
     allow: record.allow ? JSON.stringify(record.allow) : null,
-    created_at: createdAt,
     indexed_at: new Date().toISOString(),
   });
 }
@@ -269,8 +216,7 @@ function processPostContent(authorDid: string, postUri: string, record: any, cre
   if (record.reply) {
     queues.threads.push({
       root_uri: record.reply.root?.uri || null,
-      post_uri: postUri,
-      created_at: createdAt,
+      reply_uri: postUri,
       parent_uri: record.reply.parent?.uri || null,
       author_did: authorDid,
     });
@@ -283,9 +229,7 @@ function processPostContent(authorDid: string, postUri: string, record: any, cre
         if (feature.$type === 'app.bsky.richtext.facet#mention' && feature.did) {
           queues.mentions.push({
             post_uri: postUri,
-            mentioned_handle: feature.did,
             mentioned_did: feature.did,
-            created_at: createdAt,
             author_did: authorDid,
           });
         }
@@ -296,12 +240,11 @@ function processPostContent(authorDid: string, postUri: string, record: any, cre
   // Extract hashtags (simple regex)
   const hashtagMatches = text.match(/#\w+/g);
   if (hashtagMatches) {
-    hashtagMatches.forEach((tag: string) => {
+    hashtagMatches.forEach(tag => {
       queues.hashtags.push({
         post_uri: postUri,
         hashtag: tag, normalized_tag: tag.toLowerCase(),
         author_did: authorDid,
-        created_at: createdAt,
       });
     });
   }
@@ -309,13 +252,11 @@ function processPostContent(authorDid: string, postUri: string, record: any, cre
   // Extract links (simple regex)
   const linkMatches = text.match(/https?:\/\/[^\s]+/g);
   if (linkMatches) {
-    linkMatches.forEach((url: string) => {
+    linkMatches.forEach(url => {
       queues.links.push({
         post_uri: postUri,
         url: url,
-        domain: (new URL(url)).hostname,
         author_did: authorDid,
-        created_at: createdAt,
       });
     });
   }
@@ -329,7 +270,6 @@ function processPostContent(authorDid: string, postUri: string, record: any, cre
         media_url: img.image?.ref?.$link || null,
         alt_text: img.alt || null,
         author_did: authorDid,
-        created_at: createdAt,
       });
     });
   }
@@ -347,10 +287,6 @@ function processPostContent(authorDid: string, postUri: string, record: any, cre
 
 async function startCollector() {
   console.log('Starting Jetstream Ultimate Collector...');
-  // Start resource monitoring/backpressure controller
-  startResourceMonitor();
-  // Start health monitoring (prints report every 60s)
-  startHealthMonitoring();
   
   const jetstream = new Jetstream({
     ws: WebSocket,

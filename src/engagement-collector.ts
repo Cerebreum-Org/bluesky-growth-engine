@@ -176,9 +176,10 @@ async function saveEngagementMetrics(metrics: EngagementMetrics[]) {
         metrics.map(m => ({
           ...m,
           collection_date: new Date().toISOString(),
+          collection_date_only: new Date().toISOString().slice(0,10),
         })),
         {
-          onConflict: 'user_did',
+          onConflict: 'user_did,collection_date_only',
           ignoreDuplicates: false,
         }
       );

@@ -1,0 +1,42 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build output
+dist
+
+# Development
+.git
+.github
+.vscode
+*.log
+*.md
+!README.md
+
+# Tests
+test
+tests
+*.test.ts
+*.spec.ts
+
+# Archive/old code
+src/archive
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Documentation
+docs
+fixes
+
+# Frontend (if building backend only)
+frontend/node_modules
+frontend/dist
+
+# Misc
+.DS_Store
+*.swp
+*.swo
+*~

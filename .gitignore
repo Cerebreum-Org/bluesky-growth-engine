@@ -56,3 +56,4 @@ test_*.js
 # Temporary files
 screen
 package.json.scripts
+backups/*.dump

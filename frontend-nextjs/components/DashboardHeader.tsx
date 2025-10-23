@@ -1,6 +1,7 @@
 'use client';
 
 import { DarkModeToggle } from './DarkModeToggle';
+import { Navigation } from './Navigation';
 
 export function DashboardHeader() {
   return (
@@ -16,6 +17,7 @@ export function DashboardHeader() {
         </div>
         <DarkModeToggle />
       </div>
+      <Navigation />
     </div>
   );
 }

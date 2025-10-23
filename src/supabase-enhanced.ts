@@ -3,10 +3,11 @@
  */
 
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
-import { Result } from "./shared/Result.js";
-import { Logger } from "./shared/Logger.js";
-import { CircuitBreaker } from "./shared/CircuitBreaker.js";
-import { config } from "./shared/Config.js";
+import { Result } from "./shared/Result";
+import { Ok, Err } from "./shared/Result";
+import { Logger } from "./shared/Logger";
+import { CircuitBreaker } from "./shared/CircuitBreaker";
+import { config } from "./shared/Config";
 
 const logger = Logger.create("SupabaseClient");
 const appConfig = config.get();
@@ -111,7 +112,7 @@ export class EnhancedSupabaseClient {
     table: string,
     queryFn: (client: SupabaseClient) => Promise<any>,
     useBulkClient = false
-  ): Promise<Result<T>> {
+  ): Promise<Result<T, string | Error>> {
     const startTime = Date.now();
     const client = useBulkClient ? this.bulkClient : this.client;
     const breaker = useBulkClient ? bulkBreaker : queryBreaker;
@@ -139,7 +140,7 @@ export class EnhancedSupabaseClient {
         });
 
         logger.debug("Supabase query completed", { operation, table, duration, row_count: rowCount });
-        return Result.success(response.data);
+        return response.data;
 
       } catch (error) {
         const duration = Date.now() - startTime;
@@ -156,9 +157,9 @@ export class EnhancedSupabaseClient {
 
   async select<T>(table: string, options?: {
     columns?: string; filter?: Record<string, any>; orderBy?: string; limit?: number;
-  }): Promise<Result<T[]>> {
+  }): Promise<Result<T[], string | Error>> {
     return this.executeQuery("select", table, async (client) => {
-      let query = client.from(table);
+      let query: any = client.from(table);
 
       if (options?.columns) {
         query = query.select(options.columns);
@@ -184,7 +185,7 @@ export class EnhancedSupabaseClient {
     });
   }
 
-  async upsert<T>(table: string, data: T | T[], options?: { onConflict?: string }): Promise<Result<T[]>> {
+  async upsert<T>(table: string, data: T | T[], options?: { onConflict?: string }): Promise<Result<T[], string | Error>> {
     const isArray = Array.isArray(data);
     const recordCount = isArray ? data.length : 1;
     const useBulkClient = recordCount > 10;
@@ -209,20 +210,20 @@ export class EnhancedSupabaseClient {
     };
   }
 
-  async healthCheck(): Promise<Result<{ status: string; responseTime: number }>> {
+  async healthCheck(): Promise<Result<{ status: string; responseTime: number }, string>> {
     const startTime = Date.now();
     try {
       const result = await this.client.from("bluesky_users").select("did").limit(1);
       const responseTime = Date.now() - startTime;
 
       if (result.error) {
-        return Result.error(`Health check failed: ${result.error.message}`);
+        return Err(`Health check failed: ${result.error.message}`);
       }
 
-      return Result.success({ status: "healthy", responseTime });
+      return Ok({ status: "healthy", responseTime });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Health check failed";
-      return Result.error(errorMessage);
+      return Err(errorMessage);
     }
   }
 }

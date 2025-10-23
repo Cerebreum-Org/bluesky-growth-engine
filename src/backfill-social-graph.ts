@@ -47,7 +47,7 @@ async function collectUserPosts(did: string) {
             did: post.author.did,
             handle: post.author.handle,
             display_name: post.author.displayName || null,
-            avatar_url: post.author.avatar || null,
+            avatar: post.author.avatar || null,
             indexed_at: new Date().toISOString(),
           }, { onConflict: 'did' });
           batchManager.userDids.add(post.author.did);
@@ -83,7 +83,7 @@ async function collectUserPosts(did: string) {
 
         // Optionally collect likes/reposts
         if (backfillConfig.collectLikesReposts) {
-          await collectPostLikes(post.uri);
+          await collectPostLikes(post.uri, post.cid);
           await collectPostReposts(post.uri, post.cid);
         }
       }
@@ -99,7 +99,7 @@ async function collectUserPosts(did: string) {
   }
 }
 
-async function collectPostLikes(postUri: string) {
+async function collectPostLikes(postUri: string, postCid: string) {
   try {
     const response = await agent.getLikes({ uri: postUri, limit: 100 });
     
@@ -114,7 +114,7 @@ async function collectPostLikes(postUri: string) {
           did: like.actor.did,
           handle: like.actor.handle,
           display_name: like.actor.displayName || null,
-          avatar_url: like.actor.avatar || null,
+          avatar: like.actor.avatar || null,
           indexed_at: new Date().toISOString(),
         }, { onConflict: 'did' });
         batchManager.userDids.add(like.actor.did);
@@ -125,7 +125,7 @@ async function collectPostLikes(postUri: string) {
         uri: likeUri,
         author_did: like.actor.did,
         subject_uri: postUri,
-        subject_cid: postUri,
+        subject_cid: postCid,
         created_at: like.createdAt || like.indexedAt,
         indexed_at: new Date().toISOString(),
       });
@@ -150,7 +150,7 @@ async function collectPostReposts(postUri: string, postCid: string) {
           did: reposter.did,
           handle: reposter.handle,
           display_name: reposter.displayName || null,
-          avatar_url: reposter.avatar || null,
+          avatar: reposter.avatar || null,
           indexed_at: new Date().toISOString(),
         }, { onConflict: 'did' });
         batchManager.userDids.add(reposter.did);
@@ -188,7 +188,7 @@ async function collectUserFollows(did: string) {
             did: follow.did,
             handle: follow.handle,
             display_name: follow.displayName || null,
-            avatar_url: follow.avatar || null,
+            avatar: follow.avatar || null,
             indexed_at: new Date().toISOString(),
           }, { onConflict: 'did' });
           batchManager.userDids.add(follow.did);
@@ -242,7 +242,7 @@ async function main() {
     did: profile.data.did,
     handle: profile.data.handle,
     display_name: profile.data.displayName || null,
-    avatar_url: profile.data.avatar || null,
+    avatar: profile.data.avatar || null,
     indexed_at: new Date().toISOString(),
   }, { onConflict: 'did' });
   

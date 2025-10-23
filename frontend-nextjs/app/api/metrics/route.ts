@@ -1,61 +1,74 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { Pool } from 'pg';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Direct PostgreSQL connection (more reliable than PostgREST for internal APIs)
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL!,
+  max: 2, // Limit connections from frontend
+});
 
 export async function GET() {
+  let client;
   try {
+    client = await pool.connect();
     const since = new Date(Date.now() - 5 * 60 * 1000).toISOString(); // last 5 minutes
 
-    const [usersTotal, usersWithPosts, postsTotal, followsTotal, likesTotal, repostsTotal, postsRecent, followsRecent, likesRecent, repostsRecent, lastPost, lastFollow, lastLike, lastRepost] = await Promise.all([
-      supabase.from('bluesky_users').select('*', { count: 'exact' }).limit(1),
-      supabase.from('bluesky_users').select('*', { count: 'exact' }).gt('posts_count', 0).limit(1),
-      supabase.from('bluesky_posts').select('*', { count: 'exact' }).limit(1),
-      supabase.from('bluesky_follows').select('*', { count: 'exact' }).limit(1),
-      supabase.from('bluesky_likes').select('*', { count: 'exact' }).limit(1),
-      supabase.from('bluesky_reposts').select('*', { count: 'exact' }).limit(1),
-      supabase.from('bluesky_posts').select('*', { count: 'exact' }).gte('indexed_at', since).limit(1),
-      supabase.from('bluesky_follows').select('*', { count: 'exact' }).gte('indexed_at', since).limit(1),
-      supabase.from('bluesky_likes').select('*', { count: 'exact' }).gte('indexed_at', since).limit(1),
-      supabase.from('bluesky_reposts').select('*', { count: 'exact' }).gte('indexed_at', since).limit(1),
-      supabase.from('bluesky_posts').select('indexed_at').order('indexed_at', { ascending: false }).limit(1),
-      supabase.from('bluesky_follows').select('indexed_at').order('indexed_at', { ascending: false }).limit(1),
-      supabase.from('bluesky_likes').select('indexed_at').order('indexed_at', { ascending: false }).limit(1),
-      supabase.from('bluesky_reposts').select('indexed_at').order('indexed_at', { ascending: false }).limit(1),
+    // Run queries in parallel
+    const [usersTotal, usersWithPosts, postsTotal, followsTotal, likesTotal, repostsTotal,
+           postsRecent, followsRecent, likesRecent, repostsRecent,
+           lastPost, lastFollow, lastLike, lastRepost] = await Promise.all([
+      client.query('SELECT COUNT(*) as count FROM bluesky_users'),
+      client.query('SELECT COUNT(*) as count FROM bluesky_users WHERE posts_count > 0'),
+      client.query('SELECT COUNT(*) as count FROM bluesky_posts'),
+      client.query('SELECT COUNT(*) as count FROM bluesky_follows'),
+      client.query('SELECT COUNT(*) as count FROM bluesky_likes'),
+      client.query('SELECT COUNT(*) as count FROM bluesky_reposts'),
+      client.query('SELECT COUNT(*) as count FROM bluesky_posts WHERE indexed_at >= $1', [since]),
+      client.query('SELECT COUNT(*) as count FROM bluesky_follows WHERE created_at >= $1', [since]),
+      client.query('SELECT COUNT(*) as count FROM bluesky_likes WHERE indexed_at >= $1', [since]),
+      client.query('SELECT COUNT(*) as count FROM bluesky_reposts WHERE indexed_at >= $1', [since]),
+      client.query('SELECT indexed_at FROM bluesky_posts ORDER BY indexed_at DESC LIMIT 1'),
+      client.query('SELECT created_at as indexed_at FROM bluesky_follows ORDER BY created_at DESC LIMIT 1'),
+      client.query('SELECT indexed_at FROM bluesky_likes ORDER BY indexed_at DESC LIMIT 1'),
+      client.query('SELECT indexed_at FROM bluesky_reposts ORDER BY indexed_at DESC LIMIT 1'),
     ]);
 
     const minutes = 5;
     const rate = {
-      postsPerMin: (postsRecent.count || 0) / minutes,
-      followsPerMin: (followsRecent.count || 0) / minutes,
-      likesPerMin: (likesRecent.count || 0) / minutes,
-      repostsPerMin: (repostsRecent.count || 0) / minutes,
+      postsPerMin: parseInt(postsRecent.rows[0]?.count || '0') / minutes,
+      followsPerMin: parseInt(followsRecent.rows[0]?.count || '0') / minutes,
+      likesPerMin: parseInt(likesRecent.rows[0]?.count || '0') / minutes,
+      repostsPerMin: parseInt(repostsRecent.rows[0]?.count || '0') / minutes,
     };
 
+    const totalUsers = parseInt(usersTotal.rows[0]?.count || '0');
+    const withPosts = parseInt(usersWithPosts.rows[0]?.count || '0');
+    
     const coverage = {
-      totalUsers: usersTotal.count || 0,
-      usersWithPosts: usersWithPosts.count || 0,
-      percent: usersTotal.count ? ((usersWithPosts.count || 0) / usersTotal.count) * 100 : 0,
+      totalUsers,
+      usersWithPosts: withPosts,
+      percent: totalUsers ? (withPosts / totalUsers) * 100 : 0,
     };
 
     const latest = {
-      post: lastPost.data?.[0]?.indexed_at || null,
-      follow: lastFollow.data?.[0]?.indexed_at || null,
-      like: lastLike.data?.[0]?.indexed_at || null,
-      repost: lastRepost.data?.[0]?.indexed_at || null,
+      post: lastPost.rows[0]?.indexed_at || null,
+      follow: lastFollow.rows[0]?.indexed_at || null,
+      like: lastLike.rows[0]?.indexed_at || null,
+      repost: lastRepost.rows[0]?.indexed_at || null,
     };
 
     const totals = {
-      posts: postsTotal.count || 0,
-      follows: followsTotal.count || 0,
-      likes: likesTotal.count || 0,
-      reposts: repostsTotal.count || 0,
+      posts: parseInt(postsTotal.rows[0]?.count || '0'),
+      follows: parseInt(followsTotal.rows[0]?.count || '0'),
+      likes: parseInt(likesTotal.rows[0]?.count || '0'),
+      reposts: parseInt(repostsTotal.rows[0]?.count || '0'),
     };
 
     return NextResponse.json({ coverage, rate, totals, latest }, { status: 200 });
   } catch (e: any) {
+    console.error('Metrics error:', e);
     return NextResponse.json({ error: e?.message || 'metrics_error' }, { status: 500 });
+  } finally {
+    if (client) client.release();
   }
 }

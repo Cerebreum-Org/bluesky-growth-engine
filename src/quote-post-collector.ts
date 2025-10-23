@@ -27,7 +27,7 @@ export class QuotePostCollector {
   }
 }
 
-export function isQuotePost(record: unknown): boolean {
+export function isQuotePost(record: any): boolean {
   return !!(record?.embed?.record && record.embed?.$type === "app.bsky.embed.record");
 }
 

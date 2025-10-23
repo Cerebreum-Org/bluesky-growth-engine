@@ -26,8 +26,8 @@
  * ```
  */
 
-import { Result, Ok, Err, ErrResult } from "./Result.js";
-import { Logger } from "./Logger.js";
+import { Result, Ok, Err, ErrResult } from "./Result";
+import { Logger } from "./Logger";
 
 const logger = Logger.create("Config");
 

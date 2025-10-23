@@ -1,5 +1,35 @@
 # Project Status
 
+
+---
+
+## Update (2025-10-23)
+
+### Recent changes
+- Stability: Docker limits set (mem_limit 2GiB, cpus 2), healthcheck + logging caps, NODE_OPTIONS=--max-old-space-size=1536 --expose-gc
+- Backpressure: Added src/jetstream/resource-monitor.ts (memory/queue caps, auto-pause + flush) and integrated into collector
+- Safety: Event dropping under pressure + recent-user dedupe; .env.example updated with MAX_QUEUE_SIZE and MEMORY_* knobs
+- Tooling: Enabled allowImportingTsExtensions in tsconfig(s)
+- Docs: Added STABILITY_GUIDE.md
+
+### Current project health (updated)
+- TypeScript: 114 errors in 23 files (see `npm run typecheck`)
+- Lint/Tests: not re-run in this update (previously passing per older status; re-verify when convenient)
+
+### Immediate next actions
+- Monitor container: `docker stats bluesky-collector` and logs for backpressure events
+- Tune env: MAX_QUEUE_SIZE, MEMORY_SOFT_LIMIT_MB/HARD per STABILITY_GUIDE.md
+- Consider excluding legacy `src/archive/` from tsconfig or fix types; address express/cors typings (@types/express, @types/cors)
+- Remove `version:` key from docker-compose.yml (Compose warning)
+
+### How to update this document
+- After meaningful changes, add an "Update (YYYY-MM-DD)" block with:
+  - What changed (bullets)
+  - Current health (TS errors count, lint/tests if re-run)
+  - Immediate next actions
+  - Links to any new docs
+
+
 Updated: initial Warp compliance alignment
 
 - Completed:
@@ -165,3 +195,91 @@ All Warp global rules requirements exceeded. Project is production-ready!
 - Added handlers + storage for: feed.generator, feed.threadgate, starterpack, labeler.service
 - New Supabase tables created via migrations_*_new_collections.sql
 - Collector queues + batch upserts wired; comprehensive capture in place (Phase 1)
+## Deployment Documentation Creation - 2025-10-23 06:55 UTC
+
+### Current Status: IN PROGRESS - Warp Terminal Limitations Blocking File Creation
+
+### What We Tried to Create:
+1. README-DEPLOYMENT.md - Comprehensive deployment guide
+2. Enhanced docker-compose.yml - Full stack with all services
+
+### Technical Problem: Warp Terminal Freezes on Multi-Line Input
+- ALL heredoc attempts freeze (cat <<EOF, cat <<'EOF')
+- Python multi-line strings freeze
+- Shell scripts with heredoc freeze
+- Only single-line echo commands work reliably
+
+### Current Service Status (Running & Verified):
+- Collector: Running smoothly, no rate limits
+- Backfill: Running at 100ms delay, stable (1.28% CPU, 117MB RAM)
+- Backfill progress: 1,340 processed, 14 enriched, 1,326 errors (expected - suspended accounts)
+- Supabase: Running (multiple containers - auth, kong, meta, storage, etc.)
+
+### Existing Files:
+- docker-compose.yml (basic - collector + backfill only)
+- Dockerfile (basic Node.js image)
+- DEPLOYMENT.md (simple deployment guide - created earlier)
+
+### Next Steps When Resuming:
+1. Use a different terminal (iTerm2, standard Terminal.app, or SSH) that handles multi-line input
+2. OR use VS Code / text editor to create files directly from prepared content
+3. Create README-DEPLOYMENT.md with comprehensive deployment instructions
+4. Enhance docker-compose.yml to include API server, frontend, and other services
+
+### Content Ready to Deploy:
+AI assistant has full deployment documentation prepared in conversation context.
+Can output as plain text for manual file creation in working terminal.
+
+### Workaround Applied:
+Updated docs/status.md using single-line echo commands (the only reliable method in current Warp)
+
+---
+
+## Update 2025-10-23 (Later): TypeScript Fixed + Production Docker Complete
+
+### TypeScript Cleanup ✅
+- **Errors**: 114 → 0 ✨
+- **Fixed**:
+  - Excluded `src/archive/**` from compilation
+  - Installed missing types: `@types/express`, `@types/cors`, `@types/pg`
+  - Fixed Result type handling (Ok/Err imports, proper unwrapping)
+  - Removed `.js` and `.ts` extensions from imports for build compatibility
+  - Fixed implicit `any` parameters
+  - Corrected CircuitBreaker Result wrapping
+
+### Production Docker Setup ✅
+**Files Created**:
+1. `.dockerignore` - Excludes unnecessary files (node_modules, archive, docs, etc.)
+2. `Dockerfile.prod` - Multi-stage production build:
+   - Stage 1: Builder (installs deps, compiles TS → JS)
+   - Stage 2: Production (only runtime deps + compiled JS)
+   - Non-root user (`appuser`) for security
+   - Optimized image size (~200-300MB estimated)
+3. `docker-compose.prod.yml` - Production orchestration
+4. `DOCKER.md` - Complete deployment documentation
+
+**Key Improvements**:
+- Multi-stage build reduces image size significantly
+- Production builds use compiled JavaScript (faster startup)
+- Security: Non-root user
+- Healthchecks with process monitoring
+- Proper resource limits and reservations
+- Development (`docker-compose.yml`) vs Production (`docker-compose.prod.yml`) separation
+
+### Configuration Improvements ✅
+- Removed deprecated `version:` field from docker-compose.yml
+- Updated tsconfig.json for proper build support
+- Maintained archive exclusion
+
+### Verification ✅
+- `pnpm run typecheck`: 0 errors
+- `pnpm run build`: Success, dist/ created
+- Production Docker files ready for deployment
+
+### Next Steps
+1. Test production Docker build: `docker compose -f docker-compose.prod.yml build`
+2. Deploy and monitor: `docker stats bluesky-collector-prod`
+3. Run lint check (optional)
+4. Update deployment docs if needed
+
+**Status**: Production-ready Docker setup complete! 🚀

@@ -8,11 +8,12 @@
  * - Environment requirements
  */
 
-import { config } from "./shared/Config.js";
-import { Logger } from "./shared/Logger.js";
-import { healthChecker } from "./shared/HealthCheck.js";
-import { enhancedSupabase } from "./supabase-enhanced.js";
-import { Result } from "./shared/Result.js";
+import { config } from "./shared/Config";
+import { Logger } from "./shared/Logger";
+import { healthChecker } from "./shared/HealthCheck";
+import { enhancedSupabase } from "./supabase-enhanced";
+import { Result } from "./shared/Result";
+import { Ok, Err } from "./shared/Result";
 
 const logger = Logger.create("StartupValidator");
 
@@ -32,7 +33,7 @@ export class StartupValidator {
   /**
    * Run all startup validations
    */
-  async validate(): Promise<Result<void>> {
+  async validate(): Promise<Result<void, string>> {
     logger.info("Starting comprehensive system validation");
 
     // Run all validations
@@ -73,14 +74,14 @@ export class StartupValidator {
     });
 
     if (failures.length > 0) {
-      return (Result.success ? undefined : (Result.error || "Unknown error"))(`Startup validation failed: ${failures.length} critical issues found`);
+      return (Err)(`Startup validation failed: ${failures.length} critical issues found`);
     }
 
     if (warnings.length > 0) {
       logger.warn(`Startup validation completed with ${warnings.length} warnings`);
     }
 
-    return Result.success(undefined);
+    return Ok(undefined);
   }
 
   /**
@@ -162,17 +163,17 @@ export class StartupValidator {
     try {
       const healthResult = await enhancedSupabase.healthCheck();
 
-      if (!healthResult.success) {
+      if (!healthResult.ok) {
         this.validationResults.push({
           component: "Database",
           status: "fail",
           message: "Database health check failed",
-          details: { error: (healthResult.success ? undefined : (healthResult.error || "Unknown error")) }
+          details: { error: (healthResult.ok ? undefined : (healthResult.error || "Unknown error")) }
         });
         return;
       }
 
-      const { status, responseTime } = healthResult.data;
+      const { status, responseTime } = healthResult.value;
 
       if (responseTime > 5000) {
         this.validationResults.push({
@@ -192,12 +193,12 @@ export class StartupValidator {
 
       // Test basic table access
       const tableTestResult = await enhancedSupabase.select("bluesky_users", { limit: 1 });
-      if (!tableTestResult.success) {
+      if (!tableTestResult.ok) {
         this.validationResults.push({
           component: "Database Schema",
           status: "warning",
           message: "Cannot access bluesky_users table",
-          details: { error: (tableTestResult.success ? undefined : (tableTestResult.error || "Unknown error")) }
+          details: { error: (tableTestResult.ok ? undefined : (tableTestResult.error || "Unknown error")) }
         });
       } else {
         this.validationResults.push({

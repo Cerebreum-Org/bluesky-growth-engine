@@ -1,27 +1,37 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { Pool } from 'pg';
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL!,
+  max: 2,
+});
 
 export async function GET() {
+  let client;
   try {
-    // Get total count
-    const { count: totalUsers } = await supabase
-      .from('bluesky_users')
-      .select('*', { count: 'exact', head: true });
+    client = await pool.connect();
 
-    // Get 10 most recently updated users
-    const { data: recentUsers } = await supabase
-      .from('bluesky_users')
-      .select('did, handle, display_name, followers_count, updated_at')
-      .order('updated_at', { ascending: false, nullsFirst: false })
-      .limit(10);
+    // Get total count and recent users
+    const [totalResult, recentUsers] = await Promise.all([
+      client.query('SELECT COUNT(*) as count FROM bluesky_users'),
+      client.query(`
+        SELECT did, handle, display_name, followers_count, updated_at
+        FROM bluesky_users
+        WHERE updated_at IS NOT NULL
+        ORDER BY updated_at DESC
+        LIMIT 10
+      `)
+    ]);
 
     return NextResponse.json({
-      totalUsers: totalUsers || 0,
-      recentUsers: recentUsers || [],
+      totalUsers: parseInt(totalResult.rows[0]?.count || '0'),
+      recentUsers: recentUsers.rows || [],
       timestamp: new Date().toISOString(),
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching live stats:', error);
-    return NextResponse.json({ error: 'Failed to fetch stats' }, { status: 500 });
+    return NextResponse.json({ error: error?.message || 'Failed to fetch stats' }, { status: 500 });
+  } finally {
+    if (client) client.release();
   }
 }

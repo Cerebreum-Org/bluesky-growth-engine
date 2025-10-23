@@ -2,8 +2,8 @@
  * Simple health check system
  */
 
-import { config } from "./Config.js";
-import { Logger } from "./Logger.js";
+import { config } from "./Config";
+import { Logger } from "./Logger";
 
 const logger = Logger.create("HealthCheck");
 

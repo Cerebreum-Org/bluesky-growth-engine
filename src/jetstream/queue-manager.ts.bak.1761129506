@@ -4,7 +4,7 @@
  * Manages batched writes to Supabase with reliability patterns
  */
 
-import { supabase } from '../supabase';
+import { supabase } from '../supabase.ts';
 
 const RETRY_ATTEMPTS = 3;
 
@@ -30,55 +30,45 @@ export const queues = {
   deadLetters: [] as any[],
 };
 
-
 async function upsertWithRetry(table: string, rows: any[], onConflict: string, attempts = RETRY_ATTEMPTS) {
-  const chunkSize = 500;
-  for (let start = 0; start < rows.length; start += chunkSize) {
-    const slice = rows.slice(start, start + chunkSize);
-    for (let i = 0; i < attempts; i++) {
-      try {
-        const { error } = await supabase.from(table).upsert(slice, { onConflict });
-        if (error) throw error;
-        break;
-      } catch (e: any) {
-        if (i === attempts - 1) {
-          console.error(`Failed to upsert to ${table} after ${attempts} attempts:`, e);
-          queues.deadLetters.push(...slice.map(r => ({
-            table_name: table,
-            payload: r,
-            error: e.message,
-            created_at: new Date().toISOString()
-          })));
-        } else {
-          await new Promise(r => setTimeout(r, 1000 * (i + 1)));
-        }
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const { error } = await supabase.from(table).upsert(rows, { onConflict });
+      if (error) throw error;
+      return;
+    } catch (e: any) {
+      if (i === attempts - 1) {
+        console.error(`Failed to upsert to ${table} after ${attempts} attempts:`, e);
+        queues.deadLetters.push(...rows.map(r => ({
+          table_name: table,
+          data: r,
+          error_message: e.message,
+          created_at: new Date().toISOString()
+        })));
+      } else {
+        await new Promise(r => setTimeout(r, 1000 * (i + 1)));
       }
     }
   }
 }
 
-
 async function insertWithRetry(table: string, rows: any[], attempts = RETRY_ATTEMPTS) {
-  const chunkSize = 500;
-  for (let start = 0; start < rows.length; start += chunkSize) {
-    const slice = rows.slice(start, start + chunkSize);
-    for (let i = 0; i < attempts; i++) {
-      try {
-        const { error } = await supabase.from(table).insert(slice);
-        if (error) throw error;
-        break;
-      } catch (e: any) {
-        if (i === attempts - 1) {
-          console.error(`Failed to insert into ${table} after ${attempts} attempts:`, e);
-          queues.deadLetters.push(...slice.map(r => ({
-            table_name: table,
-            payload: r,
-            error: e.message,
-            created_at: new Date().toISOString()
-          })) );
-        } else {
-          await new Promise(r => setTimeout(r, 1000 * (i + 1)));
-        }
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const { error } = await supabase.from(table).insert(rows);
+      if (error) throw error;
+      return;
+    } catch (e: any) {
+      if (i === attempts - 1) {
+        console.error(`Failed to insert into ${table} after ${attempts} attempts:`, e);
+        queues.deadLetters.push(...rows.map(r => ({
+          table_name: table,
+          data: r,
+          error_message: e.message,
+          created_at: new Date().toISOString()
+        })) );
+      } else {
+        await new Promise(r => setTimeout(r, 1000 * (i + 1)));
       }
     }
   }
@@ -128,7 +118,6 @@ export async function flushLikes() {
   const byUri = new Map<string, any>();
   for (const l of raw) {
     if (!l.uri) continue;
-    
     byUri.set(l.uri, {
       uri: l.uri,
       author_did: l.author_did,
@@ -137,7 +126,6 @@ export async function flushLikes() {
       created_at: l.created_at || new Date().toISOString(),
       indexed_at: l.indexed_at || new Date().toISOString(),
     });
-
   }
   const batch = Array.from(byUri.values());
   if (batch.length === 0) return;
@@ -185,7 +173,7 @@ export async function flushBlocks() {
   }
   const batch = Array.from(byPair.values());
   if (batch.length === 0) return;
-  await upsertWithRetry('bluesky_blocks', batch, 'uri');
+  await upsertWithRetry('bluesky_blocks', batch, 'blocker_did,blocked_did');
 }
 
 
@@ -247,7 +235,7 @@ for (const li of filtered) {
 }
 const batch = Array.from(byKey.values());
   if (batch.length === 0) return;
-  await upsertWithRetry('bluesky_list_items', batch, 'uri');
+  await upsertWithRetry('bluesky_list_items', batch, 'list_uri,subject_did');
 }
 
 export async function flushThreads() {
@@ -271,18 +259,9 @@ export async function flushThreads() {
 }
 
 
-
 export async function flushMentions() {
   if (queues.mentions.length === 0) return;
-  const raw = queues.mentions.splice(0);
-  const batch = raw.map(m => ({
-    post_uri: m.post_uri,
-    author_did: m.author_did,
-    mentioned_handle: m.mentioned_handle ?? null,
-    mentioned_did: m.mentioned_did ?? null,
-    position: m.position ?? null,
-    created_at: m.created_at || new Date().toISOString(),
-  }));
+  const batch = queues.mentions.splice(0);
   await insertWithRetry('bluesky_mentions', batch);
 }
 
@@ -290,11 +269,9 @@ export async function flushMentions() {
 export async function flushHashtags() {
   if (queues.hashtags.length === 0) return;
   const raw = queues.hashtags.splice(0);
-  
-const batch = raw.map(h => ({
+  const batch = raw.map(h => ({
     post_uri: h.post_uri,
     author_did: h.author_did,
-
     hashtag: h.hashtag,
     normalized_tag: h.normalized_tag,
     position: h.position ?? null,
@@ -304,33 +281,24 @@ const batch = raw.map(h => ({
 }
 
 
-
 export async function flushLinks() {
   if (queues.links.length === 0) return;
-  const raw = queues.links.splice(0);
-  const batch = raw.map(l => ({
-    post_uri: l.post_uri,
-    author_did: l.author_did,
-    url: l.url,
-    domain: l.domain ?? null,
-    position: l.position ?? null,
-    created_at: l.created_at || new Date().toISOString(),
-  }));
+  const batch = queues.links.splice(0);
   await insertWithRetry('bluesky_links', batch);
 }
 
 
 export async function flushMedia() {
   if (queues.media.length === 0) return;
-  
-const raw = queues.media.splice(0);
+  const raw = queues.media.splice(0);
   const batch = raw.map(m => ({
     post_uri: m.post_uri,
     author_did: m.author_did,
     media_type: m.media_type,
     media_url: m.media_url ?? null,
-    media_cid: m.media_cid ?? null,
     alt_text: m.alt_text ?? null,
+    mime_type: m.mime_type ?? null,
+    size_bytes: m.size_bytes ?? null,
     dimensions: m.dimensions ?? null,
     metadata: m.metadata ?? null,
     created_at: m.created_at || new Date().toISOString(),
@@ -343,16 +311,14 @@ export async function flushActivityPatterns() {
   if (queues.activityPatterns.length === 0) return;
   const raw = queues.activityPatterns.splice(0);
   const byKey = new Map<string, any>();
-  
-for (const r of raw) {
-    const did = r.author_did;
-    const k = `${did}|${r.hour_of_day}|${r.day_of_week}`;
-    const prev = byKey.get(k) || { author_did: did, hour_of_day: r.hour_of_day, day_of_week: r.day_of_week, post_count: 0, like_count: 0, repost_count: 0, avg_engagement: 0 };
+  for (const r of raw) {
+    const k = `${r.author_did}|${r.hour_of_day}|${r.day_of_week}`;
+    const prev = byKey.get(k) || { ...r, post_count: 0 };
     prev.post_count = (prev.post_count || 0) + (r.post_count || 0 || 1);
     byKey.set(k, prev);
   }
   const batch = Array.from(byKey.values());
-  await upsertWithRetry('bluesky_activity_patterns', batch, 'author_did,hour_of_day,day_of_week');
+  await upsertWithRetry('bluesky_activity_patterns', batch.map(({created_at, ...r}: any) => r), 'author_did,hour_of_day,day_of_week');
 }
 
 
@@ -364,7 +330,7 @@ export async function flushFeedGenerators() {
     if (!g.uri) continue;
     byUri.set(g.uri, {
       uri: g.uri,
-      owner_did: g.owner_did || g.author_did,
+      author_did: g.author_did,
       display_name: g.display_name ?? null,
       description: g.description ?? null,
       created_at: g.created_at || new Date().toISOString(),
@@ -399,7 +365,7 @@ export async function flushStarterPacks() {
     if (!sp.uri) continue;
     byUri.set(sp.uri, {
       uri: sp.uri,
-      owner_did: sp.owner_did || sp.author_did,
+      author_did: sp.author_did,
       name: sp.name ?? null,
       description: sp.description ?? null,
       created_at: sp.created_at || new Date().toISOString(),
@@ -420,7 +386,7 @@ export async function flushLabelerServices() {
     if (!lb.uri) continue;
     byUri.set(lb.uri, {
       uri: lb.uri,
-      owner_did: lb.owner_did || lb.author_did,
+      author_did: lb.author_did,
       created_at: lb.created_at || new Date().toISOString(),
       indexed_at: lb.indexed_at || new Date().toISOString(),
     });

@@ -1,3 +1,32 @@
+## 2025-10-23 — Current Focus
+
+
+### Stability & Reliability
+- [x] Add Docker limits (mem 2GiB, cpus 2), healthcheck, logging caps
+- [x] Integrate backpressure (resource-monitor) and event dropping; user dedupe
+- [x] Expose resource env knobs in .env.example; add STABILITY_GUIDE.md
+- [ ] Monitor backpressure frequency and tune MAX_QUEUE_SIZE / MEMORY_* (ongoing)
+- [ ] Ensure WSL2 .wslconfig is applied on Windows (run `wsl --shutdown`)
+- [ ] Remove deprecated `version:` key from docker-compose.yml (warning)
+
+### TypeScript Cleanup
+- [ ] Fix missing types: install @types/express, @types/cors, @types/pg (dev)
+- [ ] Decide: exclude `src/archive/` from `tsconfig.json` or fix types there
+- [ ] Address Result type misuse in startup-validator.ts and supabase-enhanced.ts
+- [ ] Fix Firehose options (idResolver) in firehose-collector.ts
+- [ ] Re-run `npm run typecheck` until 0 errors (currently 114 in 23 files)
+
+### Refactoring Targets (>300 lines)
+- [ ] Extract handlers from src/jetstream-ultimate-collector.ts
+- [ ] Refactor backfill-social-graph.ts (663 lines)
+- [ ] Extract strategies from collect-follows-dynamic.ts
+- [ ] Split growth-analytics.ts by analytics type
+
+### Documentation & Ops
+- [ ] Keep docs/status.md updated after each meaningful change (use dated Update blocks)
+- [ ] Add minimal CI: typecheck + lint on PR
+- [ ] Add log markers for backpressure start/stop counts
+
 # Tasks
 
 ## Backlog

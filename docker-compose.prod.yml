@@ -1,18 +1,19 @@
 services:
   collector:
-    image: node:20-slim
-    container_name: bluesky-collector
-    working_dir: /app
-    volumes:
-      - .:/app
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    image: bluesky-growth-engine:latest
+    container_name: bluesky-collector-prod
     env_file:
       - .env
     environment:
+      - NODE_ENV=production
       - NODE_OPTIONS=--max-old-space-size=1536 --expose-gc
       - SUPABASE_URL=http://kong:8000
     networks:
       - supabase_default
-    command: npx tsx src/jetstream-ultimate-collector.ts
+    command: node dist/jetstream-ultimate-collector.js
     restart: unless-stopped
     init: true
     stop_grace_period: 30s
@@ -21,8 +22,6 @@ services:
       options:
         max-size: "50m"
         max-file: "3"
-    mem_limit: 2g
-    cpus: "2.0"
     deploy:
       resources:
         limits:
@@ -32,28 +31,29 @@ services:
           cpus: '0.5'
           memory: 512M
     healthcheck:
-      test: ['CMD-SHELL', 'node -v >/dev/null 2>&1 || exit 1']
+      test: ['CMD-SHELL', 'pgrep -f jetstream-ultimate-collector || exit 1']
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
 
   backfill:
-    image: node:20-slim
-    container_name: bluesky-backfill
-    working_dir: /app
-    volumes:
-      - .:/app
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    image: bluesky-growth-engine:latest
+    container_name: bluesky-backfill-prod
     env_file:
       - .env
     environment:
+      - NODE_ENV=production
       - NODE_OPTIONS=--max-old-space-size=1024 --expose-gc
       - SUPABASE_URL=http://kong:8000
       - BACKFILL_SHARD=0
       - BACKFILL_TOTAL_SHARDS=1
     networks:
       - supabase_default
-    command: npx tsx src/comprehensive-backfill.ts
+    command: node dist/comprehensive-backfill.js
     restart: unless-stopped
     init: true
     stop_grace_period: 30s
@@ -62,8 +62,6 @@ services:
       options:
         max-size: "50m"
         max-file: "3"
-    mem_limit: 1g
-    cpus: "1.5"
     deploy:
       resources:
         limits:
@@ -73,7 +71,7 @@ services:
           cpus: '0.25'
           memory: 256M
     healthcheck:
-      test: ['CMD-SHELL', 'node -e "process.exit(0)" || exit 1']
+      test: ['CMD-SHELL', 'pgrep -f comprehensive-backfill || exit 1']
       interval: 60s
       timeout: 10s
       retries: 3

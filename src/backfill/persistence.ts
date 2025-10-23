@@ -70,7 +70,7 @@ export class BatchManager {
       try {
         const { error } = await supabase
           .from('bluesky_likes')
-          .upsert(batch, { onConflict: 'author_did,subject_uri' });
+          .upsert(batch, { onConflict: 'uri' });
 
         if (error) throw error;
         return batch.length;
@@ -108,7 +108,7 @@ export class BatchManager {
       try {
         const { error } = await supabase
           .from('bluesky_reposts')
-          .upsert(batch, { onConflict: 'author_did,subject_uri' });
+          .upsert(batch, { onConflict: 'uri' });
 
         if (error) throw error;
         return batch.length;
